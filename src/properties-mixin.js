@@ -15,6 +15,7 @@ const finalized = new WeakSet();
 const properties = new WeakMap();
 const observers = new WeakMap();
 const batches = new WeakMap();
+const debouncers = new WeakMap();
 
 function setter(key) {
   return function(newValue) {
@@ -52,8 +53,27 @@ function reflector(type, attributeName) {
   }
 }
 
-function propertyChanged(key, oldValue, newValue) {
-  this.propertyChangedCallback(key, oldValue, newValue);
+function propertyChanged(name, oldValue, newValue) {
+  this.propertyChangedCallback(name, oldValue, newValue);
+}
+
+function propertiesChanged(name, oldValue, newValue) {
+  const batch = batches.get(this);
+  if (batch[name]) {
+    batch[name].newValue = newValue;
+  } else {
+    batch[name] = {
+      name,
+      oldValue,
+      newValue
+    };
+  }
+
+  clearTimeout(debouncers.get(this)); 
+  debouncers.set(this, setTimeout(() => {
+    this.propertiesChangedCallback(batch);
+    batches.set(this, empty());
+  }, 1));
 }
 
 export const PropertiesMixin = (SuperClass) => (class PropertiesElement extends SuperClass {
@@ -85,6 +105,7 @@ export const PropertiesMixin = (SuperClass) => (class PropertiesElement extends 
       const obs = observers.get(this)[key] = [];
       if (observe) {
         obs.push(propertyChanged);
+        obs.push(propertiesChanged);
       }
 
       if (reflect) {
@@ -187,24 +208,13 @@ export const PropertiesMixin = (SuperClass) => (class PropertiesElement extends 
     }
   }
 
-  propertyChangedCallback(name, oldValue, newValue) {
-    clearTimeout(this._debouncer);
-    const batch = batches.get(this);
-    batch[name] = {
-      name,
-      oldValue,
-      newValue
-    };
-    this._debouncer = setTimeout(() => {
-      this.propertiesChangedCallback(batch);
-      batches.set(this, empty());
-    }, 1);
-  }
+  propertyChangedCallback(name, oldValue, newValue) {}
 
   propertiesChangedCallback(changes) {}
 
   flushPropertyChanges() {
-    clearTimeout(this._debouncer);
+    clearTimeout(debouncers.get(this));
+    debouncers.delete(this);
     this.propertiesChangedCallback(batches.get(this));
     batches.set(this, empty());
   }
