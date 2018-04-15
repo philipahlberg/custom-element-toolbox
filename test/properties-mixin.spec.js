@@ -1,4 +1,4 @@
-import { PropertiesMixin } from 'lib';
+import { PropertiesMixin } from '../dist/index.js';
 import { snapshot, timeout } from './utils.js';
 
 const Base = PropertiesMixin(HTMLElement);

@@ -7,9 +7,11 @@
   "license": "MIT",
   "scripts": {
     "start": "npm run dev",
-    "dev": "karma start scripts/karma.dev.js",
-    "test": "rollup -c && karma start scripts/karma.prod.js",
-    "build": "rollup -c",
+    "dev": "concurrently -n \"rollup,karma\" \"npm run build:watch\" \"npm run test:watch\"",
+    "test": "karma start scripts/karma.prod.js",
+    "test:watch": "karma start scripts/karma.dev.js",
+    "build": "rollup -c scripts/rollup.prod.js",
+    "build:watch": "rollup -c scripts/rollup.dev.js -w",
     "lint": "eslint src",
     "format": "prettier"
   },
@@ -18,6 +20,7 @@
     "@webcomponents/shadycss": "^1.1.1",
     "@webcomponents/shadydom": "^1.0.12",
     "chai": "^4.1.2",
+    "concurrently": "^3.5.1",
     "eslint": "^4.18.2",
     "eslint-config-prettier": "^2.9.0",
     "eslint-import-resolver-node": "^0.3.2",

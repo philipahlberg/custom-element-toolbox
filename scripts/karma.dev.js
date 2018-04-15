@@ -1,12 +1,12 @@
-const webpack = require('./webpack.dev.js');
-
 module.exports = (config) => {
   config.set({
+    basePath: '../',
     frameworks: ['mocha', 'chai', 'sinon'],
-    files: ['../test/index.js'],
-    preprocessors: {
-      '../test/index.js': ['webpack']
-    },
+    files: [
+      { pattern: 'dist/index.js', type: 'module' },
+      { pattern: 'test/utils.js', type: 'module' },
+      { pattern: 'test/*.spec.js', type: 'module' }
+    ],
     browsers: ['ChromeHeadless'],
     reporters: ['progress'],
     port: 1234,
@@ -14,6 +14,8 @@ module.exports = (config) => {
     logLevel: config.LOG_WARN,
     autoWatch: true,
     singleRun: false,
-    webpack
+    // https://github.com/karma-runner/karma/pull/2834#issuecomment-376854730
+    customContextFile: 'test/context.html',
+    customDebugFile: 'test/debug.html'
   });
 };

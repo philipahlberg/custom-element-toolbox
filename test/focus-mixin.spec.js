@@ -1,4 +1,4 @@
-import { FocusMixin } from 'lib';
+import { FocusMixin } from '../dist/index.js';
 
 const FocusElement = FocusMixin(HTMLElement);
 customElements.define('focus-element', FocusElement);
@@ -40,7 +40,7 @@ describe('FocusMixin', () => {
     expect(element.matches(selector)).to.be.true;
   });
 
-  it('can be focused programatically', () => {
+  it('can be focused by method call', () => {
     element.focus();
     expect(element.focused).to.be.true;
   });
@@ -50,13 +50,16 @@ describe('FocusMixin', () => {
     expect(element.focused).to.be.true;
   });
 
+  // Testing for `focus-element:focus` would be preferred,
+  // but it does not work when testing in Chrome and Firefox,
+  // while it does work in ChromeHeadless and Edge
   it('applies a `focused` attribute when focused', () => {
     element.focus();
     const selector = 'focus-element[focused]';
     expect(element.matches(selector)).to.be.true;
   });
 
-  it('can be blurred programatically', () => {
+  it('can be blurred by method call', () => {
     element.focus();
     element.blur();
     expect(element.focused).to.be.false;

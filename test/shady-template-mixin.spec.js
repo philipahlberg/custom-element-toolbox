@@ -1,4 +1,4 @@
-import { ShadyTemplateMixin, html } from 'lib';
+import { ShadyTemplateMixin, html } from '../dist/index.js';
 import { query } from './utils.js';
 
 const externalTemplate = html`

@@ -12,8 +12,8 @@ export function dispatch(type, options, detail) {
   return this.dispatchEvent(new CustomEvent(type, init));
 }
 
-export function listen(node, listener, options) {
-  node.addEventListener(listener, options);
+export function addListener(type, listener, options) {
+  this.addEventListener(type, listener, options);
 }
 
 export function toggleAttribute(name, predicate) {
@@ -70,7 +70,7 @@ export function text(string) {
 }
 
 export function div() {
-  return createElement('div');
+  return document.createElement('div');
 }
 
 export function a(href) {

@@ -1,4 +1,4 @@
-import { AttributeMixin } from 'lib';
+import { AttributeMixin } from '../dist/index.js';
 import { snapshot } from './utils.js';
 
 class AttributeElement extends AttributeMixin(HTMLElement) {
@@ -50,7 +50,7 @@ describe('AttributeMixin', () => {
   });
 
   it('reflects `Number` attributes', () => {
-    // falsy values like  '' and null are coerced to 0
+    // falsey values like  '' and null are coerced to 0
     expect(props.number).to.equal(0);
     expect(element.hasAttribute('number')).to.be.false;
     element.number = 10;

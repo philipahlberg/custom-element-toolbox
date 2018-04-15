@@ -1,4 +1,4 @@
-import { MinimalMixin } from 'lib';
+import { MinimalMixin } from '../dist/index.js';
 
 const MinimalElement = MinimalMixin(HTMLElement);
 customElements.define('minimal-element', MinimalElement);
