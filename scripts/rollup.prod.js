@@ -1,3 +1,4 @@
+import resolve from 'rollup-plugin-node-resolve';
 import minify from 'rollup-plugin-uglify';
 
 export default [
@@ -15,6 +16,7 @@ export default [
       format: 'es'
     },
     plugins: [
+      resolve(),
       minify()
     ]
   }

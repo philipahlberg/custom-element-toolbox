@@ -1,4 +1,4 @@
-import { toDashCase, toCamelCase, has, empty } from './utils.js';
+import { toDashCase, toCamelCase, has, empty } from '@philipahlberg/scratchpad';
 
 function isPrimitive(type) {
   switch (type) {
@@ -26,13 +26,13 @@ function setter(key) {
     for (let i = 0; i < len; i++) {
       obs[i].call(this, key, oldValue, newValue);
     }
-  }
+  };
 }
 
 function getter(key) {
   return function() {
     return properties.get(this)[key];
-  }
+  };
 }
 
 function reflector(type, attributeName) {
@@ -41,7 +41,7 @@ function reflector(type, attributeName) {
     case String:
       return function(_, __, newValue) {
         this.setAttribute(attributeName, newValue);
-      }
+      };
     case Boolean:
       return function(_, __, newValue) {
         if (newValue) {
@@ -49,7 +49,7 @@ function reflector(type, attributeName) {
         } else {
           this.removeAttribute(attributeName);
         }
-      }
+      };
   }
 }
 
@@ -69,153 +69,162 @@ function propertiesChanged(name, oldValue, newValue) {
     };
   }
 
-  clearTimeout(debouncers.get(this)); 
-  debouncers.set(this, setTimeout(() => {
-    this.propertiesChangedCallback(batch);
-    batches.set(this, empty());
-  }, 1));
+  clearTimeout(debouncers.get(this));
+  debouncers.set(
+    this,
+    setTimeout(() => {
+      this.propertiesChangedCallback(batch);
+      batches.set(this, empty());
+    }, 1)
+  );
 }
 
-export const PropertiesMixin = (SuperClass) => (class PropertiesElement extends SuperClass {
-  static get observedAttributes() {
-    const props = this.properties;
-    return props ? Object.entries(props)
-      .filter(([prop, opts]) => isPrimitive(opts.type))
-      .map(([prop, opts]) => toDashCase(prop)) : [];
-  }
-
-  static setup() {
-    if (finalized.has(this)) {
-      return;
+export const PropertiesMixin = SuperClass =>
+  class extends SuperClass {
+    static get observedAttributes() {
+      const props = this.properties;
+      return props
+        ? Object.entries(props)
+            .filter(([prop, opts]) => isPrimitive(opts.type))
+            .map(([prop, opts]) => toDashCase(prop))
+        : [];
     }
 
-    observers.set(this, empty());
-    this.mappedAttributes = new Set();
-
-    for (const key in this.properties) {
-      Object.defineProperty(this.prototype, key, {
-        configurable: true,
-        enumerable: true,
-        get: getter(key),
-        set: setter(key)
-      });
-
-      const { type, reflect, observe } = this.properties[key];
-
-      const obs = observers.get(this)[key] = [];
-      if (observe) {
-        obs.push(propertyChanged);
-        obs.push(propertiesChanged);
+    static setup() {
+      if (finalized.has(this)) {
+        return;
       }
 
-      if (reflect) {
+      observers.set(this, empty());
+      this.mappedAttributes = new Set();
+
+      for (const key in this.properties) {
+        Object.defineProperty(this.prototype, key, {
+          configurable: true,
+          enumerable: true,
+          get: getter(key),
+          set: setter(key)
+        });
+
+        const { type, reflect, observe } = this.properties[key];
+
+        const obs = (observers.get(this)[key] = []);
+        if (observe) {
+          obs.push(propertyChanged);
+          obs.push(propertiesChanged);
+        }
+
+        if (reflect) {
+          const attributeName = toDashCase(key);
+          this.mappedAttributes.add(attributeName);
+          obs.push(reflector(type, attributeName));
+        }
+      }
+
+      finalized.add(this);
+    }
+
+    constructor() {
+      super();
+      this.constructor.setup();
+      properties.set(this, empty());
+      batches.set(this, empty());
+    }
+
+    connectedCallback() {
+      const constructor = this.constructor;
+      if (!has(constructor, 'properties')) {
+        return;
+      }
+
+      const options = constructor.properties;
+      for (const key in options) {
+        const { type, required } = options[key];
+        let absent = this[key] == null;
+        let value;
+
+        // Attempt to read from attribute if absent
         const attributeName = toDashCase(key);
-        this.mappedAttributes.add(attributeName);
-        obs.push(reflector(type, attributeName));
+        if (absent && this.hasAttribute(attributeName)) {
+          const raw = this.getAttribute(attributeName);
+          this.removeAttribute(attributeName);
+
+          switch (type) {
+            case String:
+              value = raw;
+              break;
+            case Number:
+              value = Number(raw);
+              break;
+            case Boolean:
+              value = raw != null;
+              break;
+            default:
+              value = JSON.parse(raw);
+              break;
+          }
+
+          absent = value == null;
+          if (!absent) {
+            this[key] = value;
+          }
+        }
+
+        // if (still) absent, apply default value
+        if (absent && has(options[key], 'default')) {
+          this[key] = options[key].default.call(this);
+        } else if (required) {
+          console.warn(
+            `Required property '${key}' was not passed down to`,
+            this
+          );
+        }
+      }
+
+      if (super.connectedCallback) {
+        super.connectedCallback();
       }
     }
 
-    finalized.add(this);
-  }
-
-  constructor() {
-    super();
-    this.constructor.setup();
-    properties.set(this, empty());
-    batches.set(this, empty());
-  }
-
-  connectedCallback() {
-    const constructor = this.constructor;
-    if (!has(constructor, 'properties')) {
-      return;
-    }
-
-    const options = constructor.properties;
-    for (const key in options) {
-      const { type, required } = options[key];
-      let absent = this[key] == null;
-      let value;
-
-      // Attempt to read from attribute if absent
-      const attributeName = toDashCase(key);
-      if (absent && this.hasAttribute(attributeName)) {
-        const raw = this.getAttribute(attributeName);
-        this.removeAttribute(attributeName);
-
+    attributeChangedCallback(attr, oldValue, newValue) {
+      if (
+        this.constructor.mappedAttributes.has(attr) &&
+        oldValue !== newValue
+      ) {
+        const prop = toCamelCase(attr);
+        const options = this.constructor.properties;
+        const type = (options[prop] && options[prop].type) || String;
+        const old = properties.get(this)[prop];
+        let updated;
         switch (type) {
           case String:
-            value = raw;
+            updated = newValue;
             break;
           case Number:
-            value = Number(raw);
+            updated = Number(newValue);
             break;
           case Boolean:
-            value = raw != null;
-            break;
-          default:
-            value = JSON.parse(raw);
+            updated = newValue != null;
             break;
         }
 
-        absent = value == null;
-        if (!absent) {
-          this[key] = value;
-        }
+        properties.get(this)[prop] = updated;
+        this.propertyChangedCallback(prop, old, updated);
       }
 
-      // if (still) absent, apply default value
-      if (absent && has(options[key], 'default')) {
-        this[key] = options[key].default.call(this);
-      } else if (required) {
-        console.warn(`Required property '${key}' was not passed down to`, this);
+      if (super.attributeChangedCallback) {
+        super.attributeChangedCallback(attr, oldValue, newValue);
       }
     }
 
-    if (super.connectedCallback) {
-      super.connectedCallback();
+    propertyChangedCallback(name, oldValue, newValue) {}
+
+    propertiesChangedCallback(changes) {}
+
+    flushPropertyChanges() {
+      clearTimeout(debouncers.get(this));
+      debouncers.delete(this);
+      this.propertiesChangedCallback(batches.get(this));
+      batches.set(this, empty());
     }
-  }
-
-  attributeChangedCallback(attr, oldValue, newValue) {
-    if (
-      this.constructor.mappedAttributes.has(attr) &&
-      oldValue !== newValue
-    ) {
-      const prop = toCamelCase(attr);
-      const options = this.constructor.properties;
-      const type = options[prop] && options[prop].type || String;
-      const old = properties.get(this)[prop];
-      let updated;
-      switch (type) {
-        case String:
-          updated = newValue;
-          break;
-        case Number:
-          updated = Number(newValue);
-          break;
-        case Boolean:
-          updated = newValue != null;
-          break;
-      }
-
-      properties.get(this)[prop] = updated;
-      this.propertyChangedCallback(prop, old, updated);
-    }
-
-    if (super.attributeChangedCallback) {
-      super.attributeChangedCallback(attr, oldValue, newValue);
-    }
-  }
-
-  propertyChangedCallback(name, oldValue, newValue) {}
-
-  propertiesChangedCallback(changes) {}
-
-  flushPropertyChanges() {
-    clearTimeout(debouncers.get(this));
-    debouncers.delete(this);
-    this.propertiesChangedCallback(batches.get(this));
-    batches.set(this, empty());
-  }
-});
+  };

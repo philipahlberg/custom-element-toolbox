@@ -1,4 +1,4 @@
-import { toDashCase } from './utils.js';
+import { toDashCase } from '@philipahlberg/scratchpad';
 
 function getter(type, key) {
   switch (type) {
@@ -41,50 +41,51 @@ const finalized = new WeakSet();
  * `Number` property values are coerced with `Number()`.
  * Note: This mixin prohibits the use of `PropertiesMixin`.
  */
-export const AttributeMixin = (SuperClass) => (class AttributeElement extends SuperClass {
-  constructor() {
-    super();
-    const ctor = this.constructor;
-    if (finalized.has(ctor) || !ctor.hasOwnProperty('properties')) {
-      return;
-    }
-
-    const properties = ctor.properties;
-    const prototype = ctor.prototype;
-    for (const key in properties) {
-      const { type, reflect } = properties[key];
-      if (reflect) {
-        const attribute = toDashCase(key);
-        Object.defineProperty(prototype, key, {
-          configurable: true,
-          enumerable: true,
-          get: getter(type, attribute),
-          set: setter(type, attribute)
-        });
+export const AttributeMixin = SuperClass =>
+  class extends SuperClass {
+    constructor() {
+      super();
+      const ctor = this.constructor;
+      if (finalized.has(ctor) || !ctor.hasOwnProperty('properties')) {
+        return;
       }
+
+      const prototype = ctor.prototype;
+      const properties = Object.keys(ctor.properties);
+      for (const key of properties) {
+        const { type, reflect } = properties[key];
+        if (reflect !== false) {
+          const attribute = toDashCase(key);
+          Object.defineProperty(prototype, key, {
+            configurable: true,
+            enumerable: true,
+            get: getter(type, attribute),
+            set: setter(type, attribute)
+          });
+        }
+      }
+
+      finalized.add(ctor);
     }
 
-    finalized.add(ctor);
-  }
-
-  /**
-   * Toggle an attribute.
-   * @param {String} name name of the attribute to toggle.
-   * @param {Boolean} predicate decides whether to set or remove the attribute.
-   */
-  toggleAttribute(name, predicate) {
-    if (predicate != null) {
-      if (predicate) {
-        this.setAttribute(name, '');
+    /**
+     * Toggle an attribute.
+     * @param {String} name name of the attribute to toggle.
+     * @param {Boolean} predicate decides whether to set or remove the attribute.
+     */
+    toggleAttribute(name, predicate) {
+      if (predicate != null) {
+        if (predicate) {
+          this.setAttribute(name, '');
+        } else {
+          this.removeAttribute(name);
+        }
       } else {
-        this.removeAttribute(name);
-      }
-    } else {
-      if (this.hasAttribute(name)) {
-        this.removeAttribute(name);
-      } else {
-        this.setAttribute(name, '');
+        if (this.hasAttribute(name)) {
+          this.removeAttribute(name);
+        } else {
+          this.setAttribute(name, '');
+        }
       }
     }
-  }
-});
+  };
