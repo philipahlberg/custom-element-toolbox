@@ -1,4 +1,4 @@
-const POLYFILLS = [
+const polyfills = [
   '@webcomponents/custom-elements',
   '@webcomponents/shadydom',
   '@webcomponents/shadycss/scoping-shim.min.js'
@@ -9,19 +9,16 @@ module.exports = (config) => {
     basePath: '../',
     frameworks: ['mocha', 'chai', 'sinon'],
     files: [
-      ...POLYFILLS,
+      ...polyfills,
       { pattern: 'dist/index.js', type: 'module' },
-      { pattern: 'test/utils.js', type: 'module' },
-      { pattern: 'test/*.spec.js', type: 'module' }
+      { pattern: 'test/*.js', type: 'module' }
     ],
-    browsers: ['Chrome', 'Edge', 'FirefoxESM'],
+    browsers: ['ChromeHeadless', 'FirefoxHeadless', 'Edge'],
     customLaunchers: {
-      FirefoxESM: {
+      FirefoxHeadless: {
         base: 'Firefox',
-        prefs: {
-          'dom.moduleScripts.enabled': true
-        }
-      }
+        flags: ['-headless'],
+      },
     },
     reporters: ['progress'],
     port: 1234,

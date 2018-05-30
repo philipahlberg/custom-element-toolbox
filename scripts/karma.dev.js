@@ -4,8 +4,7 @@ module.exports = (config) => {
     frameworks: ['mocha', 'chai', 'sinon'],
     files: [
       { pattern: 'dist/index.js', type: 'module' },
-      { pattern: 'test/utils.js', type: 'module' },
-      { pattern: 'test/*.spec.js', type: 'module' }
+      { pattern: 'test/*.js', type: 'module' }
     ],
     browsers: ['ChromeHeadless'],
     reporters: ['progress'],
