@@ -1,7 +1,7 @@
-const subscriptions = new WeakMap();
+export const connector = (store) => {
+  const subscriptions = new WeakMap();
 
-export const connector = (store) => (
-  (SuperClass, map) => class extends SuperClass {
+  return (SuperClass, map) => class extends SuperClass {
     connectedCallback() {
       const { selectors, actions } = map;
 
@@ -39,4 +39,4 @@ export const connector = (store) => (
       }
     }
   }
-);
+};
