@@ -1,23 +1,30 @@
+/**
+ * Convert 'PascalCase' or 'camelCase' to 'dash-case'.
+ * @param str A PascalCase og camelCase string
+ */
 function toDashCase(str) {
-  return str.replace(/([a-zA-Z])(?=[A-Z])/g, '$1-').toLowerCase();
+    return str.replace(/([a-zA-Z])(?=[A-Z])/g, '$1-').toLowerCase();
 }
-
+/**
+ * Convert 'dash-case' to 'camelCase'.
+ * @param str A camelCase string
+ */
 function toCamelCase(str) {
-  return str.replace(/-([a-z])/ig, (m) => m[1].toUpperCase());
+    return str.replace(/-([a-z])/ig, (m) => m[1].toUpperCase());
 }
-
 function has(target, prop) {
-  return target.hasOwnProperty(prop);
+    return target.hasOwnProperty(prop);
 }
-
 function empty() {
-  return Object.create(null);
+    return Object.create(null);
 }
-
+/**
+ * Shorthand for `Object.freeze`.
+ * @param object
+ */
 function freeze(object) {
-  return Object.freeze(object);
+    return Object.freeze(object);
 }
-
 const EMPTY = freeze(empty());
 
 function getter(type, key) {
@@ -61,58 +68,59 @@ const finalized = new WeakSet();
  * `Number` property values are coerced with `Number()`.
  * Note: This mixin prohibits the use of `PropertiesMixin`.
  */
-const AttributeMixin = (SuperClass) => (class AttributeElement extends SuperClass {
-  constructor() {
-    super();
-    const ctor = this.constructor;
-    if (finalized.has(ctor) || !ctor.hasOwnProperty('properties')) {
-      return;
-    }
-
-    const properties = ctor.properties;
-    const prototype = ctor.prototype;
-    for (const key in properties) {
-      const { type, reflect } = properties[key];
-      if (reflect) {
-        const attribute = toDashCase(key);
-        Object.defineProperty(prototype, key, {
-          configurable: true,
-          enumerable: true,
-          get: getter(type, attribute),
-          set: setter(type, attribute)
-        });
+const AttributeMixin = SuperClass =>
+  class extends SuperClass {
+    constructor() {
+      super();
+      const ctor = this.constructor;
+      if (finalized.has(ctor) || !ctor.hasOwnProperty('properties')) {
+        return;
       }
+
+      const prototype = ctor.prototype;
+      const properties = Object.keys(ctor.properties);
+      for (const key of properties) {
+        const { type, reflect } = properties[key];
+        if (reflect !== false) {
+          const attribute = toDashCase(key);
+          Object.defineProperty(prototype, key, {
+            configurable: true,
+            enumerable: true,
+            get: getter(type, attribute),
+            set: setter(type, attribute)
+          });
+        }
+      }
+
+      finalized.add(ctor);
     }
 
-    finalized.add(ctor);
-  }
-
-  /**
-   * Toggle an attribute.
-   * @param {String} name name of the attribute to toggle.
-   * @param {Boolean} predicate decides whether to set or remove the attribute.
-   */
-  toggleAttribute(name, predicate) {
-    if (predicate != null) {
-      if (predicate) {
-        this.setAttribute(name, '');
+    /**
+     * Toggle an attribute.
+     * @param {String} name name of the attribute to toggle.
+     * @param {Boolean} predicate decides whether to set or remove the attribute.
+     */
+    toggleAttribute(name, predicate) {
+      if (predicate != null) {
+        if (predicate) {
+          this.setAttribute(name, '');
+        } else {
+          this.removeAttribute(name);
+        }
       } else {
-        this.removeAttribute(name);
-      }
-    } else {
-      if (this.hasAttribute(name)) {
-        this.removeAttribute(name);
-      } else {
-        this.setAttribute(name, '');
+        if (this.hasAttribute(name)) {
+          this.removeAttribute(name);
+        } else {
+          this.setAttribute(name, '');
+        }
       }
     }
-  }
-});
+  };
 
-const subscriptions = new WeakMap();
+const connector = (store) => {
+  const subscriptions = new WeakMap();
 
-const connector = (store) => (
-  (SuperClass, map) => class extends SuperClass {
+  return (SuperClass, map) => class extends SuperClass {
     connectedCallback() {
       const { selectors, actions } = map;
 
@@ -150,129 +158,134 @@ const connector = (store) => (
       }
     }
   }
-);
-
-const FocusMixin = (SuperClass) => (class FocusableElement extends SuperClass {
-  static get observedAttributes() {
-    return (super.observedAttributes || []).concat(['disabled']);
-  }
-
-  set disabled(v) {
-    if (v) {
-      this.setAttribute('disabled', '');
-    } else {
-      this.removeAttribute('disabled');
-    }
-  }
-
-  get disabled() {
-    return this.hasAttribute('disabled');
-  }
-
-  set focused(v) {
-    if (v) {
-      this.setAttribute('focused', '');
-    } else {
-      this.removeAttribute('focused');
-    }
-  }
-
-  get focused() {
-    return this.hasAttribute('focused');
-  }
-
-  attributeChangedCallback(attr, oldValue, newValue) {
-    if (attr === 'disabled') {
-      const hasValue = newValue != null;
-      this.setAttribute('aria-disabled', hasValue);
-      if (hasValue) {
-        // Remove attribute entirely to ensure that the
-        // element is no longer focusable
-        this.removeAttribute('tabindex');
-        this.blur();
-      } else {
-        this.setAttribute('tabindex', '0');
-      }
-    }
-
-    if (super.attributeChangedCallback) {
-      super.attributeChangedCallback(attr, oldValue, newValue);
-    }
-  }
-
-  connectedCallback() {
-    this.addEventListener('focus', this.onFocus.bind(this));
-    this.addEventListener('blur', this.onBlur.bind(this));
-
-    if (!this.hasAttribute('tabindex') && !this.disabled) {
-      this.setAttribute('tabindex', '0');
-    }
-
-    if (super.connectedCallback) {
-      super.connectedCallback();
-    }
-  }
-
-  focus() {
-    super.focus();
-    if (!this.disabled) {
-      this.dispatchEvent(new Event('focus'));
-    }
-  }
-
-  onFocus(event) {
-    this.focused = true;
-  }
-
-  blur() {
-    super.blur();
-    this.dispatchEvent(new Event('blur'));
-  }
-
-  onBlur(event) {
-    this.focused = false;
-  }
-});
-
-const MinimalMixin = (SuperClass) => class MinimalElement extends SuperClass {
-  /**
-   * Convenience function for emitting a custom event.
-   * @param {string} type 
-   * @param {*} detail 
-   * @param {CustomEventInit} options 
-   */
-  emit(type, detail, options) {
-    const init = Object.assign({
-      bubbles: true,
-      cancelable: true,
-      detail
-    }, options);
-    return this.dispatchEvent(new CustomEvent(type, init));
-  }
-
-  /**
-   * Toggle an attribute.
-   * @param {String} name name of the attribute to toggle.
-   * @param {Boolean} predicate decides whether to set or remove the attribute.
-   */
-  toggleAttribute(name, predicate) {
-    if (predicate != null) {
-      if (predicate) {
-        this.setAttribute(name, '');
-      } else {
-        this.removeAttribute(name);
-      }
-    } else {
-      if (this.hasAttribute(name)) {
-        this.removeAttribute(name);
-      } else {
-        this.setAttribute(name, '');
-      }
-    }
-  }
 };
 
-function isPrimitive(type) {
+const FocusMixin = SuperClass =>
+  class extends SuperClass {
+    static get observedAttributes() {
+      return (super.observedAttributes || []).concat(['disabled']);
+    }
+
+    set disabled(v) {
+      if (v) {
+        this.setAttribute('disabled', '');
+      } else {
+        this.removeAttribute('disabled');
+      }
+    }
+
+    get disabled() {
+      return this.hasAttribute('disabled');
+    }
+
+    set focused(v) {
+      if (v) {
+        this.setAttribute('focused', '');
+      } else {
+        this.removeAttribute('focused');
+      }
+    }
+
+    get focused() {
+      return this.hasAttribute('focused');
+    }
+
+    attributeChangedCallback(attr, oldValue, newValue) {
+      if (attr === 'disabled') {
+        const hasValue = newValue != null;
+        this.setAttribute('aria-disabled', hasValue);
+        if (hasValue) {
+          // Remove attribute entirely to ensure that the
+          // element is no longer focusable
+          this.removeAttribute('tabindex');
+          this.blur();
+        } else {
+          this.setAttribute('tabindex', '0');
+        }
+      }
+
+      if (super.attributeChangedCallback) {
+        super.attributeChangedCallback(attr, oldValue, newValue);
+      }
+    }
+
+    connectedCallback() {
+      this.addEventListener('focus', this.onFocus.bind(this));
+      this.addEventListener('blur', this.onBlur.bind(this));
+
+      if (!this.hasAttribute('tabindex') && !this.disabled) {
+        this.setAttribute('tabindex', '0');
+      }
+
+      if (super.connectedCallback) {
+        super.connectedCallback();
+      }
+    }
+
+    focus() {
+      super.focus();
+      if (!this.disabled) {
+        this.dispatchEvent(new Event('focus'));
+      }
+    }
+
+    onFocus(event) {
+      this.focused = true;
+    }
+
+    blur() {
+      super.blur();
+      this.dispatchEvent(new Event('blur'));
+    }
+
+    onBlur(event) {
+      this.focused = false;
+    }
+  };
+
+const MinimalMixin = SuperClass =>
+  class extends SuperClass {
+    /**
+     * Convenience function for emitting a custom event.
+     * @param {string} type
+     * @param {*} detail
+     * @param {CustomEventInit} options
+     */
+    emit(type, detail, options) {
+      const init = Object.assign(
+        {
+          bubbles: true,
+          cancelable: true,
+          detail
+        },
+        options
+      );
+      return this.dispatchEvent(new CustomEvent(type, init));
+    }
+
+    /**
+     * Toggle an attribute.
+     * @param {String} name name of the attribute to toggle.
+     * @param {Boolean} predicate decides whether to set or remove the attribute.
+     */
+    toggleAttribute(name, predicate) {
+      if (predicate != null) {
+        if (predicate) {
+          this.setAttribute(name, '');
+        } else {
+          this.removeAttribute(name);
+        }
+      } else {
+        if (this.hasAttribute(name)) {
+          this.removeAttribute(name);
+        } else {
+          this.setAttribute(name, '');
+        }
+      }
+    }
+  };
+
+function isPrimitive$1(type) {
   switch (type) {
     case String:
     case Number:
@@ -298,13 +311,13 @@ function setter$1(key) {
     for (let i = 0; i < len; i++) {
       obs[i].call(this, key, oldValue, newValue);
     }
-  }
+  };
 }
 
 function getter$1(key) {
   return function() {
     return properties.get(this)[key];
-  }
+  };
 }
 
 function reflector(type, attributeName) {
@@ -313,7 +326,7 @@ function reflector(type, attributeName) {
     case String:
       return function(_, __, newValue) {
         this.setAttribute(attributeName, newValue);
-      }
+      };
     case Boolean:
       return function(_, __, newValue) {
         if (newValue) {
@@ -321,7 +334,7 @@ function reflector(type, attributeName) {
         } else {
           this.removeAttribute(attributeName);
         }
-      }
+      };
   }
 }
 
@@ -341,181 +354,191 @@ function propertiesChanged(name, oldValue, newValue) {
     };
   }
 
-  clearTimeout(debouncers.get(this)); 
-  debouncers.set(this, setTimeout(() => {
-    this.propertiesChangedCallback(batch);
-    batches.set(this, empty());
-  }, 1));
+  clearTimeout(debouncers.get(this));
+  debouncers.set(
+    this,
+    setTimeout(() => {
+      this.propertiesChangedCallback(batch);
+      batches.set(this, empty());
+    }, 1)
+  );
 }
 
-const PropertiesMixin = (SuperClass) => (class PropertiesElement extends SuperClass {
-  static get observedAttributes() {
-    const props = this.properties;
-    return props ? Object.entries(props)
-      .filter(([prop, opts]) => isPrimitive(opts.type))
-      .map(([prop, opts]) => toDashCase(prop)) : [];
-  }
-
-  static setup() {
-    if (finalized$1.has(this)) {
-      return;
+const PropertiesMixin = SuperClass =>
+  class extends SuperClass {
+    static get observedAttributes() {
+      const props = this.properties;
+      return props
+        ? Object.entries(props)
+            .filter(([prop, opts]) => isPrimitive$1(opts.type))
+            .map(([prop, opts]) => toDashCase(prop))
+        : [];
     }
 
-    observers.set(this, empty());
-    this.mappedAttributes = new Set();
-
-    for (const key in this.properties) {
-      Object.defineProperty(this.prototype, key, {
-        configurable: true,
-        enumerable: true,
-        get: getter$1(key),
-        set: setter$1(key)
-      });
-
-      const { type, reflect, observe } = this.properties[key];
-
-      const obs = observers.get(this)[key] = [];
-      if (observe) {
-        obs.push(propertyChanged);
-        obs.push(propertiesChanged);
+    static setup() {
+      if (finalized$1.has(this)) {
+        return;
       }
 
-      if (reflect) {
+      observers.set(this, empty());
+      this.mappedAttributes = new Set();
+
+      for (const key in this.properties) {
+        Object.defineProperty(this.prototype, key, {
+          configurable: true,
+          enumerable: true,
+          get: getter$1(key),
+          set: setter$1(key)
+        });
+
+        const { type, reflect, observe } = this.properties[key];
+
+        const obs = (observers.get(this)[key] = []);
+        if (observe) {
+          obs.push(propertyChanged);
+          obs.push(propertiesChanged);
+        }
+
+        if (reflect) {
+          const attributeName = toDashCase(key);
+          this.mappedAttributes.add(attributeName);
+          obs.push(reflector(type, attributeName));
+        }
+      }
+
+      finalized$1.add(this);
+    }
+
+    constructor() {
+      super();
+      this.constructor.setup();
+      properties.set(this, empty());
+      batches.set(this, empty());
+    }
+
+    connectedCallback() {
+      const constructor = this.constructor;
+      if (!has(constructor, 'properties')) {
+        return;
+      }
+
+      const options = constructor.properties;
+      for (const key in options) {
+        const { type, required } = options[key];
+        let absent = this[key] == null;
+        let value;
+
+        // Attempt to read from attribute if absent
         const attributeName = toDashCase(key);
-        this.mappedAttributes.add(attributeName);
-        obs.push(reflector(type, attributeName));
+        if (absent && this.hasAttribute(attributeName)) {
+          const raw = this.getAttribute(attributeName);
+          this.removeAttribute(attributeName);
+
+          switch (type) {
+            case String:
+              value = raw;
+              break;
+            case Number:
+              value = Number(raw);
+              break;
+            case Boolean:
+              value = raw != null;
+              break;
+            default:
+              value = JSON.parse(raw);
+              break;
+          }
+
+          absent = value == null;
+          if (!absent) {
+            this[key] = value;
+          }
+        }
+
+        // if (still) absent, apply default value
+        if (absent && has(options[key], 'default')) {
+          this[key] = options[key].default.call(this);
+        } else if (required) {
+          console.warn(
+            `Required property '${key}' was not passed down to`,
+            this
+          );
+        }
+      }
+
+      if (super.connectedCallback) {
+        super.connectedCallback();
       }
     }
 
-    finalized$1.add(this);
-  }
-
-  constructor() {
-    super();
-    this.constructor.setup();
-    properties.set(this, empty());
-    batches.set(this, empty());
-  }
-
-  connectedCallback() {
-    const constructor = this.constructor;
-    if (!has(constructor, 'properties')) {
-      return;
-    }
-
-    const options = constructor.properties;
-    for (const key in options) {
-      const { type, required } = options[key];
-      let absent = this[key] == null;
-      let value;
-
-      // Attempt to read from attribute if absent
-      const attributeName = toDashCase(key);
-      if (absent && this.hasAttribute(attributeName)) {
-        const raw = this.getAttribute(attributeName);
-        this.removeAttribute(attributeName);
-
+    attributeChangedCallback(attr, oldValue, newValue) {
+      if (
+        this.constructor.mappedAttributes.has(attr) &&
+        oldValue !== newValue
+      ) {
+        const prop = toCamelCase(attr);
+        const options = this.constructor.properties;
+        const type = (options[prop] && options[prop].type) || String;
+        const old = properties.get(this)[prop];
+        let updated;
         switch (type) {
           case String:
-            value = raw;
+            updated = newValue;
             break;
           case Number:
-            value = Number(raw);
+            updated = Number(newValue);
             break;
           case Boolean:
-            value = raw != null;
-            break;
-          default:
-            value = JSON.parse(raw);
+            updated = newValue != null;
             break;
         }
 
-        absent = value == null;
-        if (!absent) {
-          this[key] = value;
-        }
+        properties.get(this)[prop] = updated;
+        this.propertyChangedCallback(prop, old, updated);
       }
 
-      // if (still) absent, apply default value
-      if (absent && has(options[key], 'default')) {
-        this[key] = options[key].default.call(this);
-      } else if (required) {
-        console.warn(`Required property '${key}' was not passed down to`, this);
+      if (super.attributeChangedCallback) {
+        super.attributeChangedCallback(attr, oldValue, newValue);
       }
     }
 
-    if (super.connectedCallback) {
-      super.connectedCallback();
-    }
-  }
+    propertyChangedCallback(name, oldValue, newValue) {}
 
-  attributeChangedCallback(attr, oldValue, newValue) {
-    if (
-      this.constructor.mappedAttributes.has(attr) &&
-      oldValue !== newValue
-    ) {
-      const prop = toCamelCase(attr);
-      const options = this.constructor.properties;
-      const type = options[prop] && options[prop].type || String;
-      const old = properties.get(this)[prop];
-      let updated;
-      switch (type) {
-        case String:
-          updated = newValue;
-          break;
-        case Number:
-          updated = Number(newValue);
-          break;
-        case Boolean:
-          updated = newValue != null;
-          break;
+    propertiesChangedCallback(changes) {}
+
+    flushPropertyChanges() {
+      clearTimeout(debouncers.get(this));
+      debouncers.delete(this);
+      this.propertiesChangedCallback(batches.get(this));
+      batches.set(this, empty());
+    }
+  };
+
+const StaticTemplateMixin = SuperClass =>
+  class extends SuperClass {
+    constructor() {
+      super();
+      if (this.constructor.hasOwnProperty('template')) {
+        this.attachShadow({ mode: 'open' });
+      }
+    }
+
+    connectedCallback() {
+      const ctor = this.constructor;
+      if (ctor.hasOwnProperty('template')) {
+        const template = ctor.template.content;
+        this.shadowRoot.appendChild(template.cloneNode(true));
       }
 
-      properties.get(this)[prop] = updated;
-      this.propertyChangedCallback(prop, old, updated);
+      if (super.connectedCallback) {
+        super.connectedCallback();
+      }
     }
-
-    if (super.attributeChangedCallback) {
-      super.attributeChangedCallback(attr, oldValue, newValue);
-    }
-  }
-
-  propertyChangedCallback(name, oldValue, newValue) {}
-
-  propertiesChangedCallback(changes) {}
-
-  flushPropertyChanges() {
-    clearTimeout(debouncers.get(this));
-    debouncers.delete(this);
-    this.propertiesChangedCallback(batches.get(this));
-    batches.set(this, empty());
-  }
-});
-
-const StaticTemplateMixin = (SuperClass) => (class StaticTemplateElement extends SuperClass {
-  constructor() {
-    super();
-    if (this.constructor.hasOwnProperty('template')) {
-      this.attachShadow({ mode: 'open' });
-    }
-  }
-
-  connectedCallback() {
-    const ctor = this.constructor;
-    if (ctor.hasOwnProperty('template')) {
-      const template = ctor.template.content;
-      this.shadowRoot.appendChild(template.cloneNode(true));
-    }
-
-    if (super.connectedCallback) {
-      super.connectedCallback();
-    }
-  }
-});
+  };
 
 /**
  * @param {*} value Object to stringify into HTML
- * @return {string} HTML stringified form of `obj`
+ * @return {string} HTML stringified form of `value`
  */
 function sanitize(value) {
   if (value instanceof HTMLTemplateElement) {
@@ -534,21 +557,22 @@ function sanitize(value) {
 function html(strings, ...values) {
   const rawStrings = strings.raw;
   const template = document.createElement('template');
-  template.innerHTML = values.reduce((acc, v, idx) =>
-    acc + sanitize(v) + rawStrings[idx + 1], rawStrings[0]);
+  template.innerHTML = values.reduce(
+    (acc, v, idx) => acc + sanitize(v) + rawStrings[idx + 1],
+    rawStrings[0]
+  );
   return template;
 }
 
 const ShadyCSS = window.ShadyCSS;
-const emulated = ShadyCSS != null && (
-  !ShadyCSS.nativeShadow ||
-  !ShadyCSS.nativeCss
-);
+const emulated =
+  ShadyCSS != null && (!ShadyCSS.nativeShadow || !ShadyCSS.nativeCss);
 
 const finalized$2 = new WeakSet();
 
-const ShadyTemplateMixin = (SuperClass) => {
+const ShadyTemplateMixin = SuperClass => {
   const Base = StaticTemplateMixin(SuperClass);
+
   return class ShadyTemplateElement extends Base {
     constructor() {
       super();
@@ -576,7 +600,7 @@ const ShadyTemplateMixin = (SuperClass) => {
         super.connectedCallback();
       }
     }
-  }
+  };
 };
 
 export { AttributeMixin, connector, FocusMixin, MinimalMixin, PropertiesMixin, ShadyTemplateMixin, StaticTemplateMixin, html };
