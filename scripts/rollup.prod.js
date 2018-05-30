@@ -7,7 +7,10 @@ export default [
     output: {
       file: './dist/index.js',
       format: 'es'
-    }
+    },
+    plugins: [
+      resolve()
+    ]
   },
   {
     input: './src/index.js',
