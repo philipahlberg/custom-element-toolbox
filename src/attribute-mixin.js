@@ -1,71 +1,170 @@
-import { toDashCase } from '@philipahlberg/scratchpad';
-
-function getter(type, key) {
-  switch (type) {
-    case String:
-      return function() {
-        return this.getAttribute(key);
-      };
-    case Boolean:
-      return function() {
-        return this.hasAttribute(key);
-      };
-    case Number:
-      return function() {
-        return Number(this.getAttribute(key));
-      };
-  }
-}
-
-function setter(type, key) {
-  switch (type) {
-    case String:
-    case Number:
-      return function(v) {
-        this.setAttribute(key, v);
-      };
-    case Boolean:
-      return function(v) {
-        this.toggleAttribute(key, v);
-      };
-  }
-}
+import { toDashCase, toCamelCase, has } from '@philipahlberg/scratchpad';
+import { isSerializableType } from './shared.js';
 
 const finalized = new WeakSet();
+const reflectedProperties = new WeakMap();
+const attributeToProperty = new Map();
+const propertyToAttribute = new Map();
 
 /**
  * A very simple mixin for synchronizing primitive properties with attributes.
  * Maps `camelCase` properties to `dash-case` attributes.
  * `String` property values map directly to attribute values.
- * `Boolean` property values toggle the existence of attributes.
+ * `Boolean` property values toggle/check the existence of attributes.
  * `Number` property values are coerced with `Number()`.
- * Note: This mixin prohibits the use of `PropertiesMixin`.
+ * 
+ * Note: This mixin requires `PropertyAccessorMixin`.
  */
 export const AttributeMixin = SuperClass =>
-  class extends SuperClass {
-    constructor() {
-      super();
-      const ctor = this.constructor;
-      if (finalized.has(ctor) || !ctor.hasOwnProperty('properties')) {
+  class AttributeElement extends SuperClass {
+
+    // Set up an attribute -> property mapping
+    // by observing all attributes that are primitive
+    // (e. g. `Boolean`, `Number` or `String`)
+    static get observedAttributes() {
+      const properties = this.properties || {};
+      return Object.keys(properties)
+        .filter((key) => isSerializableType(properties[key].type))
+        .map((key) => toDashCase(key));
+    }
+
+    /**
+     * Set up property -> attribute mapping.
+     */
+    static setup() {
+      if (finalized.has(this) || !has(this, 'properties')) {
         return;
       }
 
-      const prototype = ctor.prototype;
-      const properties = Object.keys(ctor.properties);
-      for (const key of properties) {
-        const { type, reflect } = properties[key];
-        if (reflect !== false) {
+      super.setup();
+
+      const properties = this.properties;
+      const keys = Object.keys(properties);
+      for (const key of keys) {
+        const { type, reflectToAttribute } = properties[key];
+        if (reflectToAttribute || (reflectToAttribute !== false && isSerializable(type))) {
           const attribute = toDashCase(key);
-          Object.defineProperty(prototype, key, {
-            configurable: true,
-            enumerable: true,
-            get: getter(type, attribute),
-            set: setter(type, attribute)
-          });
+          // Cache property and attribute names (both ways)
+          propertyToAttribute.set(key, attribute);
+          attributeToProperty.set(attribute, key);
         }
       }
 
-      finalized.add(ctor);
+      finalized.add(this);
+    }
+
+    // Perform attribute-deserialization, i. e.
+    // extract values embedded in attributes.
+    connectedCallback() {
+      const constructor = this.constructor;
+      if (has(constructor, 'properties')) {
+        const options = Object.keys(constructor.properties);
+        for (const key of options) {
+          let isNull = this[key] == null;
+
+          // Attempt to read from attribute if property is missing
+          const attributeName = propertyToAttribute.get(key) || toDashCase(key);
+          if (isNull && this.hasAttribute(attributeName)) {
+            const value = this.deserialize(attributeName);
+            if (value != null) {
+              this[key] = value;
+            }
+          }
+        }
+      }
+
+      if (super.connectedCallback) {
+        super.connectedCallback();
+      }
+    }
+
+    /**
+     * Override point for property setters.
+     * @param {string} key 
+     * @param {*} value 
+     */
+    set(key, value) {
+      super.set(key, value);
+      // Check if the property should be reflected
+      const properties = this.constructor.properties;
+      if (
+        properties[key].reflectToAttribute !== false
+      ) {
+        // If it should, we pass it to `serialize`
+        this.serialize(key, value);
+      }
+    }
+
+    /**
+     * Override point for property -> attribute conversion.
+     * @param {string} key 
+     * @param {*} value 
+     */
+    serialize(key, value) {
+      const attribute = propertyToAttribute.get(key) || toDashCase(key);
+      const { type } = this.constructor.properties[key];
+      if (type != null && isSerializableType(type)) {
+        switch (type) {
+          case String:
+          case Number:
+            this.setAttribute(attribute, value);
+            break;
+          case Boolean:
+            this.toggleAttribute(attribute, value);
+            break;
+        }
+      }
+    }
+
+    /**
+     * Override point for attribute -> property conversion.
+     * @param {*} attribute 
+     */
+    deserialize(attribute) {
+      const key = attributeToProperty.get(attribute);
+      const { type } = this.constructor.properties[key];
+      if (type != null && isSerializableType(type)) {
+        switch (type) {
+          case String:
+            return this.getAttribute(attribute);
+          case Number:
+            return Number(this.getAttribute(attribute));
+          case Boolean:
+            return this.hasAttribute(attribute);
+          default:
+            return JSON.parse(this.getAttribute(attribute));
+        }
+      }
+    }
+
+    attributeChangedCallback(attr, oldValue, newValue) {
+      const property = attributeToProperty.get(attr);
+      const properties = this.constructor.properties;
+      if (
+        property != null &&
+        properties[property] != null &&
+        oldValue !== newValue
+      ) {
+        const { type } = properties[property];
+        let propertyValue;
+        switch (type) {
+          case String:
+            propertyValue = newValue;
+            break;
+          case Number:
+            propertyValue = Number(newValue);
+            break;
+          case Boolean:
+            propertyValue = newValue != null;
+            break;
+        }
+
+        this[property] = propertyValue;
+      }
+
+      if (super.attributeChangedCallback) {
+        super.attributeChangedCallback(attr, oldValue, newValue);
+      }
     }
 
     /**

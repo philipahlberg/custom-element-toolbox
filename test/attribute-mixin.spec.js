@@ -1,24 +1,28 @@
-import { AttributeMixin } from '../dist/index.js';
+import { AttributeMixin, PropertyAccessorsMixin } from '../dist/index.js';
 import { snapshot } from './utils.js';
 
-class AttributeElement extends AttributeMixin(HTMLElement) {
+const Base = AttributeMixin(
+  PropertyAccessorsMixin(HTMLElement)
+);
+
+class AttributeElement extends Base {
   static get properties() {
     return {
       string: {
         type: String,
-        reflect: true
+        reflectToAttribute: true
       },
       number: {
         type: Number,
-        reflect: true
+        reflectToAttribute: true
       },
       boolean: {
         type: Boolean,
-        reflect: true
+        reflectToAttribute: true
       },
       camelCase: {
         type: String,
-        reflect: true
+        reflectToAttribute: true
       }
     }
   }
@@ -37,12 +41,11 @@ describe('AttributeMixin', () => {
   });
 
   afterEach(() => {
-    element.remove();
+    document.body.removeChild(element);
   });
 
   it('reflects `String` attributes', () => {
-    // An undefined attribute is null, not undefined
-    expect(props.string).to.be.null;
+    expect(props.string).to.be.undefined;
     expect(element.hasAttribute('string')).to.be.false;
     element.string = 'value';
     expect(element.hasAttribute('string')).to.be.true;
@@ -50,8 +53,7 @@ describe('AttributeMixin', () => {
   });
 
   it('reflects `Number` attributes', () => {
-    // falsey values like  '' and null are coerced to 0
-    expect(props.number).to.equal(0);
+    expect(props.number).to.equal(undefined);
     expect(element.hasAttribute('number')).to.be.false;
     element.number = 10;
     expect(element.hasAttribute('number')).to.be.true;
@@ -84,5 +86,20 @@ describe('AttributeMixin', () => {
   it('converts dash-case to camelCase', () => {
     element.setAttribute('camel-case', 'anything');
     expect(element.camelCase).to.equal('anything');
+  });
+
+  it('toggles an attribute', () => {
+    expect(element.hasAttribute('attribute')).to.be.false;
+    element.toggleAttribute('attribute');
+    expect(element.hasAttribute('attribute')).to.be.true;
+    element.toggleAttribute('attribute');
+    expect(element.hasAttribute('attribute')).to.be.false;
+  });
+
+  it('conditionally toggles an attribute', () => {
+    element.toggleAttribute('attribute', true);
+    expect(element.hasAttribute('attribute')).to.be.true;
+    element.toggleAttribute('attribute', false);
+    expect(element.hasAttribute('attribute')).to.be.false;
   });
 });
