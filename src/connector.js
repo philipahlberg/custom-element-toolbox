@@ -1,7 +1,7 @@
 export const connector = (store) => {
   const subscriptions = new WeakMap();
 
-  return (SuperClass, map) => class extends SuperClass {
+  return (SuperClass, map) => class ConnectedElement extends SuperClass {
     connectedCallback() {
       const { selectors, actions } = map;
 
@@ -27,7 +27,7 @@ export const connector = (store) => {
       if (super.connectedCallback) {
         super.connectedCallback();
       }
-     }
+    }
 
     disconnectedCallback() {
       if (map.selectors) {

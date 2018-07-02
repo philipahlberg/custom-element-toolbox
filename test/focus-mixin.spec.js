@@ -5,14 +5,15 @@ customElements.define('focus-element', FocusElement);
 
 describe('FocusMixin', () => {
   let element;
+
   beforeEach(() => {
     element = new FocusElement();
     document.body.appendChild(element);
   });
 
   afterEach(() => {
-    element.remove();
-  })
+    document.body.removeChild(element);
+  });
 
   it('is not disabled by default', () => {
     expect(element.disabled).to.be.false;

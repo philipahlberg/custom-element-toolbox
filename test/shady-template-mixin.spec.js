@@ -41,7 +41,7 @@ describe('ShadyTemplateMixin', () => {
   });
 
   afterEach(() => {
-    element.remove();
+    document.body.removeChild(element);
     $ = undefined;
   });
 

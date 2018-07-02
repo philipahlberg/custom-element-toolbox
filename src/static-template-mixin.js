@@ -1,5 +1,5 @@
 export const StaticTemplateMixin = SuperClass =>
-  class extends SuperClass {
+  class StaticTemplateElement extends SuperClass {
     constructor() {
       super();
       if (this.constructor.hasOwnProperty('template')) {

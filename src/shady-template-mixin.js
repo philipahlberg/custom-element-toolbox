@@ -31,10 +31,6 @@ export const ShadyTemplateMixin = SuperClass => {
           ShadyCSS.styleElement(this);
         }
       }
-
-      if (super.connectedCallback) {
-        super.connectedCallback();
-      }
     }
   };
 };

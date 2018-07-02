@@ -1,11 +1,11 @@
 export const FocusMixin = SuperClass =>
-  class extends SuperClass {
+  class FocusElement extends SuperClass {
     static get observedAttributes() {
       return (super.observedAttributes || []).concat(['disabled']);
     }
 
-    set disabled(v) {
-      if (v) {
+    set disabled(value) {
+      if (value) {
         this.setAttribute('disabled', '');
       } else {
         this.removeAttribute('disabled');
@@ -16,8 +16,8 @@ export const FocusMixin = SuperClass =>
       return this.hasAttribute('disabled');
     }
 
-    set focused(v) {
-      if (v) {
+    set focused(value) {
+      if (value) {
         this.setAttribute('focused', '');
       } else {
         this.removeAttribute('focused');

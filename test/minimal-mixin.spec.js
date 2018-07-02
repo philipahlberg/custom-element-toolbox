@@ -5,14 +5,15 @@ customElements.define('minimal-element', MinimalElement);
 
 describe('MinimalMixin', () => {
   let element;
+
   beforeEach(() => {
     element = new MinimalElement();
     document.body.appendChild(element);
   });
 
   afterEach(() => {
-    element.remove();
-  })
+    document.body.removeChild(element);
+  });
 
   it('emits an event', () => {
     let triggered = false;
@@ -30,20 +31,5 @@ describe('MinimalMixin', () => {
     }, { once: true });
     element.emit('event', { boolean: true });
     expect(detail.boolean).to.be.true;
-  });
-
-  it('toggles an attribute', () => {
-    expect(element.hasAttribute('attribute')).to.be.false;
-    element.toggleAttribute('attribute');
-    expect(element.hasAttribute('attribute')).to.be.true;
-    element.toggleAttribute('attribute');
-    expect(element.hasAttribute('attribute')).to.be.false;
-  });
-
-  it('conditionally toggles an attribute', () => {
-    element.toggleAttribute('attribute', true);
-    expect(element.hasAttribute('attribute')).to.be.true;
-    element.toggleAttribute('attribute', false);
-    expect(element.hasAttribute('attribute')).to.be.false;
   });
 });
