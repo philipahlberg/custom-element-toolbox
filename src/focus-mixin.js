@@ -1,7 +1,10 @@
 export const FocusMixin = SuperClass =>
   class FocusElement extends SuperClass {
     static get observedAttributes() {
-      return (super.observedAttributes || []).concat(['disabled']);
+      return Array.from(
+        new Set(super.observedAttributes)
+          .add('disabled')
+      );
     }
 
     set disabled(value) {
@@ -67,7 +70,7 @@ export const FocusMixin = SuperClass =>
       }
     }
 
-    onFocus(event) {
+    onFocus() {
       this.focused = true;
     }
 
@@ -76,7 +79,7 @@ export const FocusMixin = SuperClass =>
       this.dispatchEvent(new Event('blur'));
     }
 
-    onBlur(event) {
+    onBlur() {
       this.focused = false;
     }
   };
