@@ -10,3 +10,11 @@ export function isSerializableType(type) {
     type === Number ||
     type === Boolean;
 }
+
+/**
+ * Convert 'PascalCase' or 'camelCase' to 'dash-case'.
+ * @param str A PascalCase og camelCase string
+ */
+export function toDashCase(str) {
+  return str.replace(/([a-zA-Z])(?=[A-Z])/g, '$1-').toLowerCase();
+}
