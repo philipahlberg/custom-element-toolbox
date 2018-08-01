@@ -1,5 +1,13 @@
-export const FocusMixin = SuperClass =>
-  class FocusElement extends SuperClass {
+import { Mixin } from './mixin.js';
+import { BaseMixin } from './base-mixin.js';
+
+export const FocusMixin = Mixin(SuperClass => {
+  const Base = BaseMixin(SuperClass);
+
+  const onFocus = Symbol();
+  const onBlur = Symbol();
+
+  return class FocusElement extends Base {
     static get observedAttributes() {
       return Array.from(
         new Set(super.observedAttributes)
@@ -7,24 +15,27 @@ export const FocusMixin = SuperClass =>
       );
     }
 
-    set disabled(value) {
-      if (value) {
-        this.setAttribute('disabled', '');
-      } else {
-        this.removeAttribute('disabled');
-      }
+    /**
+     * Specifies if the element is disabled.
+     * @param {boolean} disabled
+     */
+    set disabled(disabled) {
+      this.toggleAttribute('disabled', disabled);
     }
 
     get disabled() {
       return this.hasAttribute('disabled');
     }
 
-    set focused(value) {
-      if (value) {
-        this.setAttribute('focused', '');
-      } else {
-        this.removeAttribute('focused');
-      }
+    /**
+     * Specifies if the element is focused.
+     * 
+     * Note: use `.focus()` to focus the element.
+     * 
+     * @param {boolean} focused
+     */
+    set focused(focused) {
+      this.toggleAttribute('focused', focused);
     }
 
     get focused() {
@@ -51,8 +62,8 @@ export const FocusMixin = SuperClass =>
     }
 
     connectedCallback() {
-      this.addEventListener('focus', this.onFocus.bind(this));
-      this.addEventListener('blur', this.onBlur.bind(this));
+      this.addEventListener('focus', this[onFocus].bind(this));
+      this.addEventListener('blur', this[onBlur].bind(this));
 
       if (!this.hasAttribute('tabindex') && !this.disabled) {
         this.setAttribute('tabindex', '0');
@@ -63,23 +74,58 @@ export const FocusMixin = SuperClass =>
       }
     }
 
+    /**
+     * Focus the element, unless it is disabled.
+     * 
+     * Fires a `focus` event.
+     * 
+     * @event focus
+     */
     focus() {
-      super.focus();
-      if (!this.disabled) {
-        this.dispatchEvent(new Event('focus'));
+      if (this.disabled) {
+        return;
       }
+
+      super.focus();
+      this.dispatchEvent(new Event('focus'));
     }
 
-    onFocus() {
+    /**
+     * @private
+     */
+    [onFocus]() {
+      if (this.disabled) {
+        return;
+      }
+
       this.focused = true;
     }
 
+    /**
+     * Blur the element.
+     * 
+     * Fires a `blur` event.
+     * 
+     * @event blur
+     */
     blur() {
+      if (this.disabled) {
+        return;
+      }
+
       super.blur();
       this.dispatchEvent(new Event('blur'));
     }
 
-    onBlur() {
+    /**
+     * @private
+     */
+    [onBlur]() {
+      if (this.disabled) {
+        return;
+      }
+
       this.focused = false;
     }
-  };
+  }
+});
