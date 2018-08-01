@@ -1,10 +1,10 @@
-import { has, empty } from '@philipahlberg/scratchpad';
+import { Mixin } from './mixin.js';
 
 const finalized = new WeakSet();
 const properties = new WeakMap();
 
-export const PropertyAccessorsMixin = SuperClass =>
-  class PropertyAccessorsElement extends SuperClass {
+export const PropertyAccessorsMixin = Mixin(SuperClass => {
+  return class PropertyAccessorsElement extends SuperClass {
 
     static setup() {
       if (finalized.has(this)) {
@@ -32,7 +32,7 @@ export const PropertyAccessorsMixin = SuperClass =>
     constructor() {
       super();
       this.constructor.setup();
-      properties.set(this, empty());
+      properties.set(this, {});
     }
 
     set(key, value) {
@@ -44,18 +44,14 @@ export const PropertyAccessorsMixin = SuperClass =>
     }
 
     connectedCallback() {
-      const constructor = this.constructor;
-      if (!has(constructor, 'properties')) {
-        return;
-      }
-
-      const properties = constructor.properties;
+      const { constructor } = this;
+      const { properties } = constructor;
       const keys = Object.keys(properties);
       for (const key of keys) {
         const { required } = properties[key];
         let absent = this[key] == null;
         // if absent, apply default value
-        if (absent && has(properties[key], 'default')) {
+        if (absent && properties[key].hasOwnProperty('default')) {
           this[key] = properties[key].default.call(this);
         } else if (required) {
           console.warn(
@@ -69,4 +65,5 @@ export const PropertyAccessorsMixin = SuperClass =>
         super.connectedCallback();
       }
     }
-  };
+  }
+});

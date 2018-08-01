@@ -1,5 +1,7 @@
-export const StaticTemplateMixin = SuperClass =>
-  class StaticTemplateElement extends SuperClass {
+import { Mixin } from './mixin.js';
+
+export const StaticTemplateMixin = Mixin(SuperClass => {
+  return class StaticTemplateElement extends SuperClass {
     constructor() {
       super();
       if (this.constructor.hasOwnProperty('template')) {
@@ -18,7 +20,8 @@ export const StaticTemplateMixin = SuperClass =>
         super.connectedCallback();
       }
     }
-  };
+  }
+});
 
 /**
  * @param {*} value Object to stringify into HTML

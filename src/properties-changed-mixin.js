@@ -1,33 +1,27 @@
-import { has, empty } from '@philipahlberg/scratchpad';
+import { Mixin } from './mixin.js';
+import { PropertyAccessorsMixin } from './property-accessors-mixin.js';
 
 const finalized = new WeakSet();
 const observedProperties = new WeakMap();
 const batches = new WeakMap();
 const debouncers = new WeakMap();
 
-const warn = () => {
-  console.error('PropertiesChangedMixin requires PropertyAccessorMixin to be applied first.');
-};
-
 /**
  * A mixin that batches property changes and delivers them
  * in `propertiesChangedCallback`.
  * 
- * @param {*} SuperClass 
+ * @param {HTMLElement} SuperClass 
  */
-export const PropertiesChangedMixin = SuperClass =>
-  class PropertiesChangedElement extends SuperClass {
+export const PropertiesChangedMixin = Mixin(SuperClass => {
+  const Base = PropertyAccessorsMixin(SuperClass);
 
+  return class PropertiesChangedElement extends Base {
     static setup() {
-      if (finalized.has(this) || !has(this, 'properties')) {
+      if (finalized.has(this)) {
         return;
       }
 
-      if (super.setup != null) {
-        super.setup();
-      } else {
-        warn();
-      }
+      super.setup();
 
       if (this.observedProperties) {
         observedProperties.set(
@@ -35,7 +29,7 @@ export const PropertiesChangedMixin = SuperClass =>
           new Set(this.observedProperties)
         );
       } else {
-        const properties = this.properties;
+        const { properties } = this;
         observedProperties.set(this, new Set(
           Object.keys(properties)
             .filter(key => properties[key].observe !== false)
@@ -48,7 +42,7 @@ export const PropertiesChangedMixin = SuperClass =>
     constructor() {
       super();
       this.constructor.setup();
-      batches.set(this, empty());
+      batches.set(this, {});
     }
 
     set(name, newValue) {
@@ -76,7 +70,7 @@ export const PropertiesChangedMixin = SuperClass =>
         this,
         setTimeout(() => {
           this.propertiesChangedCallback(batch);
-          batches.set(this, empty());
+          batches.set(this, {});
         }, 1)
       );
     }
@@ -87,6 +81,7 @@ export const PropertiesChangedMixin = SuperClass =>
       clearTimeout(debouncers.get(this));
       debouncers.delete(this);
       this.propertiesChangedCallback(batches.get(this));
-      batches.set(this, empty());
+      batches.set(this, {});
     }
-  };
+  }
+});

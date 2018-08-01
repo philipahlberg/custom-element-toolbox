@@ -1,14 +1,16 @@
+import { Mixin } from './mixin.js';
 import { StaticTemplateMixin } from './static-template-mixin.js';
 
 const ShadyCSS = window.ShadyCSS;
-const emulated =
-  ShadyCSS != null && (!ShadyCSS.nativeShadow || !ShadyCSS.nativeCss);
+const emulated = ShadyCSS && (
+  !ShadyCSS.nativeShadow ||
+  !ShadyCSS.nativeCss
+);
 
 const finalized = new WeakSet();
 
-export const ShadyTemplateMixin = SuperClass => {
+export const ShadyTemplateMixin = Mixin(SuperClass => {
   const Base = StaticTemplateMixin(SuperClass);
-
   return class ShadyTemplateElement extends Base {
     constructor() {
       super();
@@ -32,5 +34,5 @@ export const ShadyTemplateMixin = SuperClass => {
         }
       }
     }
-  };
-};
+  }
+});

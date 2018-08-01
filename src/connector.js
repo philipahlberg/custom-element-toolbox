@@ -10,7 +10,8 @@ export const connector = (store) => {
           this,
           selectors(store.getState())
         );
-        subscriptions.set(this, store.subscribe(update));
+        const subscription = store.subscribe(update);
+        subscriptions.set(this, subscription);
         update();
       }
 
