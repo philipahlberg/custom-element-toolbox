@@ -1,5 +1,13 @@
-export const ControlMixin = (SuperClass) =>
-  class extends SuperClass {
+import { Mixin } from './mixin.js';
+import { BaseMixin } from './base-mixin.js';
+
+const onClick = Symbol();
+const onKeydown = Symbol();
+
+export const ToggleMixin = Mixin(SuperClass => {
+  const Base = BaseMixin(SuperClass);
+
+  return class ToggleElement extends Base {
     static get observedAttributes() {
       return Array.from(
         new Set(super.observedAttributes)
@@ -9,10 +17,19 @@ export const ControlMixin = (SuperClass) =>
 
     constructor() {
       super();
-      this._onClick = this._onClick.bind(this);
-      this._onKeydown = this._onKeydown.bind(this);
+      this[onClick] = this[onClick].bind(this);
+      this[onKeydown] = this[onKeydown].bind(this);
     }
 
+    /**
+     * Set the checked state of the element.
+     * 
+     * The state change is not carried out
+     * if the corresponding `input` event is
+     * prevented.
+     * 
+     * @param {boolean} checked
+     */
     set checked(checked) {
       // emit details of the requested state, i.e.
       // *not* the current state.
@@ -51,14 +68,20 @@ export const ControlMixin = (SuperClass) =>
     connectedCallback() {
       this.setAttribute('aria-checked', this.checked);
 
-      this.addEventListener('click', this._onClick);
-      this.addEventListener('keydown', this._onKeydown);
+      this.addEventListener('click', this[onClick]);
+      this.addEventListener('keydown', this[onKeydown]);
 
       if (super.connectedCallback) {
         super.connectedCallback();
       }
     }
 
+    /**
+     * Toggle the checked state of the element,
+     * unless the element is disabled.
+     * 
+     * @event input
+     */
     toggle() {
       if (this.disabled) {
         return;
@@ -66,7 +89,10 @@ export const ControlMixin = (SuperClass) =>
       this.checked = !this.checked;
     }
 
-    _onClick(event) {
+    /**
+     * @private
+     */
+    [onClick]() {
       if (this.disabled) {
         return;
       }
@@ -76,7 +102,10 @@ export const ControlMixin = (SuperClass) =>
       }));
     }
   
-    _onKeydown(event) {
+    /**
+     * @private
+     */
+    [onKeydown](event) {
       if (this.disabled) {
         return;
       }
@@ -92,4 +121,5 @@ export const ControlMixin = (SuperClass) =>
           return;
       }
     }
-  };
+  }
+});
