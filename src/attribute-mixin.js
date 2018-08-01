@@ -1,23 +1,25 @@
-import { toDashCase, toCamelCase, has } from '@philipahlberg/scratchpad';
-import { isSerializableType } from './shared.js';
+import { Mixin } from './mixin.js';
+import { BaseMixin } from './base-mixin.js';
+import { toDashCase, isSerializableType } from './shared.js';
 
 const finalized = new WeakSet();
-const reflectedProperties = new WeakMap();
 const attributeToProperty = new Map();
 const propertyToAttribute = new Map();
 
 /**
  * A very simple mixin for synchronizing primitive properties with attributes.
  * Maps `camelCase` properties to `dash-case` attributes.
- * `String` property values map directly to attribute values.
- * `Boolean` property values toggle/check the existence of attributes.
- * `Number` property values are coerced with `Number()`.
  * 
- * Note: This mixin requires `PropertyAccessorMixin`.
+ * `String` property values map directly to attribute values.
+ * 
+ * `Boolean` property values toggle/check the existence of attributes.
+ * 
+ * `Number` property values are coerced with `Number()`.
  */
-export const AttributeMixin = SuperClass =>
-  class AttributeElement extends SuperClass {
+export const AttributeMixin = Mixin(SuperClass => {
+  const Base = BaseMixin(SuperClass);
 
+  return class AttributeElement extends Base {
     // Set up an attribute -> property mapping
     // by observing all attributes that are primitive
     // (e. g. `Boolean`, `Number` or `String`)
@@ -32,13 +34,13 @@ export const AttributeMixin = SuperClass =>
      * Set up property -> attribute mapping.
      */
     static setup() {
-      if (finalized.has(this) || !has(this, 'properties')) {
+      super.setup();
+
+      if (finalized.has(this)) {
         return;
       }
 
-      super.setup();
-
-      const properties = this.properties;
+      const { properties } = this;
       const keys = Object.keys(properties);
       for (const key of keys) {
         const { type, reflectToAttribute } = properties[key];
@@ -56,19 +58,18 @@ export const AttributeMixin = SuperClass =>
     // Perform attribute-deserialization, i. e.
     // extract values embedded in attributes.
     connectedCallback() {
-      const constructor = this.constructor;
-      if (has(constructor, 'properties')) {
-        const options = Object.keys(constructor.properties);
-        for (const key of options) {
-          let isNull = this[key] == null;
+      const { constructor } = this;
+      const { properties } = constructor;
+      const keys = Object.keys(properties);
+      for (const key of keys) {
+        let isNull = this[key] == null;
 
-          // Attempt to read from attribute if property is missing
-          const attributeName = propertyToAttribute.get(key) || toDashCase(key);
-          if (isNull && this.hasAttribute(attributeName)) {
-            const value = this.deserialize(attributeName);
-            if (value != null) {
-              this[key] = value;
-            }
+        // Attempt to read from attribute if property is missing
+        const attributeName = propertyToAttribute.get(key) || toDashCase(key);
+        if (isNull && this.hasAttribute(attributeName)) {
+          const value = this.deserialize(attributeName);
+          if (value != null) {
+            this[key] = value;
           }
         }
       }
@@ -166,25 +167,5 @@ export const AttributeMixin = SuperClass =>
         super.attributeChangedCallback(attr, oldValue, newValue);
       }
     }
-
-    /**
-     * Toggle an attribute.
-     * @param {String} name name of the attribute to toggle.
-     * @param {Boolean} predicate decides whether to set or remove the attribute.
-     */
-    toggleAttribute(name, predicate) {
-      if (predicate != null) {
-        if (predicate) {
-          this.setAttribute(name, '');
-        } else {
-          this.removeAttribute(name);
-        }
-      } else {
-        if (this.hasAttribute(name)) {
-          this.removeAttribute(name);
-        } else {
-          this.setAttribute(name, '');
-        }
-      }
-    }
-  };
+  }
+});
