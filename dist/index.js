@@ -1,29 +1,86 @@
-/**
- * Convert 'PascalCase' or 'camelCase' to 'dash-case'.
- * @param str A PascalCase og camelCase string
- */
-function toDashCase(str) {
-    return str.replace(/([a-zA-Z])(?=[A-Z])/g, '$1-').toLowerCase();
-}
-function has(target, prop) {
-    return target.hasOwnProperty(prop);
-}
-function empty() {
-    return Object.create(null);
-}
-/**
- * Shorthand for `Object.freeze`.
- * @param object
- */
-function freeze(object) {
-    return Object.freeze(object);
-}
-const EMPTY = freeze(empty());
+const Mixin = Mix => {
+  const mixes = new WeakSet();
+
+  return SuperClass => {
+    let prototype = SuperClass;
+    while (prototype != null) {
+      if (mixes.has(prototype)) {
+        return SuperClass;
+      }
+
+      prototype = Object.getPrototypeOf(prototype);
+    }
+
+    const application = Mix(SuperClass);
+    mixes.add(application);
+    return application;
+  }
+};
+
+const BaseMixin = Mixin(SuperClass => {
+  return class BaseElement extends SuperClass {
+    /**
+     * Shorthand for emitting a custom event.
+     * 
+     * @param {string} type The type/name of the event.
+     * @param {*} detail Any extra state to include in the event.
+     * @param {CustomEventInit} options
+     */
+    emit(type, detail, options) {
+      const defaults = {
+        bubbles: true,
+        cancelable: true,
+        detail
+      };
+      const init = Object.assign(defaults, options);
+      return this.dispatchEvent(new CustomEvent(type, init));
+    }
+
+    /**
+     * Toggle a boolean attribute (removing it if it is present
+     * and adding it if it is not present) on the specified element.
+     * 
+     * @param {String} name A string specifying the name of the attribute
+     * to be toggled.
+     * @param {Boolean} force A boolean value to determine whether the
+     * attribute should be added or removed, no matter whether the
+     * attribute is present or not at the moment.
+     * 
+     * @returns {Boolean} true if attribute name is eventually present, 
+     * and false otherwise.
+     */
+    toggleAttribute(name, force) {
+      if (force != null) {
+        if (force) {
+          this.setAttribute(name, '');
+        } else {
+          this.removeAttribute(name);
+        }
+      } else {
+        if (this.hasAttribute(name)) {
+          this.removeAttribute(name);
+        } else {
+          this.setAttribute(name, '');
+        }
+      }
+
+      return force || this.hasAttribute(name);
+    }
+  }
+});
 
 function isSerializableType(type) {
   return type === String ||
     type === Number ||
     type === Boolean;
+}
+
+/**
+ * Convert 'PascalCase' or 'camelCase' to 'dash-case'.
+ * @param str A PascalCase og camelCase string
+ */
+function toDashCase(str) {
+  return str.replace(/([a-zA-Z])(?=[A-Z])/g, '$1-').toLowerCase();
 }
 
 const finalized = new WeakSet();
@@ -33,15 +90,17 @@ const propertyToAttribute = new Map();
 /**
  * A very simple mixin for synchronizing primitive properties with attributes.
  * Maps `camelCase` properties to `dash-case` attributes.
- * `String` property values map directly to attribute values.
- * `Boolean` property values toggle/check the existence of attributes.
- * `Number` property values are coerced with `Number()`.
  * 
- * Note: This mixin requires `PropertyAccessorMixin`.
+ * `String` property values map directly to attribute values.
+ * 
+ * `Boolean` property values toggle/check the existence of attributes.
+ * 
+ * `Number` property values are coerced with `Number()`.
  */
-const AttributeMixin = SuperClass =>
-  class AttributeElement extends SuperClass {
+const AttributeMixin = Mixin(SuperClass => {
+  const Base = BaseMixin(SuperClass);
 
+  return class AttributeElement extends Base {
     // Set up an attribute -> property mapping
     // by observing all attributes that are primitive
     // (e. g. `Boolean`, `Number` or `String`)
@@ -56,13 +115,13 @@ const AttributeMixin = SuperClass =>
      * Set up property -> attribute mapping.
      */
     static setup() {
-      if (finalized.has(this) || !has(this, 'properties')) {
+      super.setup();
+
+      if (finalized.has(this)) {
         return;
       }
 
-      super.setup();
-
-      const properties = this.properties;
+      const { properties } = this;
       const keys = Object.keys(properties);
       for (const key of keys) {
         const { type, reflectToAttribute } = properties[key];
@@ -80,19 +139,18 @@ const AttributeMixin = SuperClass =>
     // Perform attribute-deserialization, i. e.
     // extract values embedded in attributes.
     connectedCallback() {
-      const constructor = this.constructor;
-      if (has(constructor, 'properties')) {
-        const options = Object.keys(constructor.properties);
-        for (const key of options) {
-          let isNull = this[key] == null;
+      const { constructor } = this;
+      const { properties } = constructor;
+      const keys = Object.keys(properties);
+      for (const key of keys) {
+        let isNull = this[key] == null;
 
-          // Attempt to read from attribute if property is missing
-          const attributeName = propertyToAttribute.get(key) || toDashCase(key);
-          if (isNull && this.hasAttribute(attributeName)) {
-            const value = this.deserialize(attributeName);
-            if (value != null) {
-              this[key] = value;
-            }
+        // Attempt to read from attribute if property is missing
+        const attributeName = propertyToAttribute.get(key) || toDashCase(key);
+        if (isNull && this.hasAttribute(attributeName)) {
+          const value = this.deserialize(attributeName);
+          if (value != null) {
+            this[key] = value;
           }
         }
       }
@@ -190,79 +248,8 @@ const AttributeMixin = SuperClass =>
         super.attributeChangedCallback(attr, oldValue, newValue);
       }
     }
-
-    /**
-     * Toggle an attribute.
-     * @param {String} name name of the attribute to toggle.
-     * @param {Boolean} predicate decides whether to set or remove the attribute.
-     */
-    toggleAttribute(name, predicate) {
-      if (predicate != null) {
-        if (predicate) {
-          this.setAttribute(name, '');
-        } else {
-          this.removeAttribute(name);
-        }
-      } else {
-        if (this.hasAttribute(name)) {
-          this.removeAttribute(name);
-        } else {
-          this.setAttribute(name, '');
-        }
-      }
-    }
-  };
-
-const batches = new WeakMap();
-const debouncers = new WeakMap();
-
-/**
- * A mixin that batches `attributeChangedCallback` changes
- * and delivers them in `attributesChangedCallback`.
- * 
- * @param {*} SuperClass 
- */
-const AttributesChangedMixin = SuperClass =>
-  class AttributesChangedElement extends SuperClass {
-
-    constructor() {
-      super();
-      batches.set(this, empty());
-    }
-
-    attributeChangedCallback(name, oldValue, newValue) {
-        // Apply the changes to the pending batch
-        const batch = batches.get(this);
-        if (batch[name] != null) {
-          batch[name].newValue = newValue;
-        } else {
-          batch[name] = {
-            name,
-            oldValue,
-            newValue
-          };
-        }
-  
-        // Reset the debouncer
-        clearTimeout(debouncers.get(this));
-        debouncers.set(
-          this,
-          setTimeout(() => {
-            this.attributesChangedCallback(batch);
-            batches.set(this, empty());
-          }, 1)
-        );
-    }
-
-    attributesChangedCallback(changes) {}
-
-    flushAttributeChanges() {
-      clearTimeout(debouncers.get(this));
-      debouncers.delete(this);
-      this.attributesChangedCallback(batches.get(this));
-      batches.set(this, empty());
-    }
-  };
+  }
+});
 
 const connector = (store) => {
   const subscriptions = new WeakMap();
@@ -276,7 +263,8 @@ const connector = (store) => {
           this,
           selectors(store.getState())
         );
-        subscriptions.set(this, store.subscribe(update));
+        const subscription = store.subscribe(update);
+        subscriptions.set(this, subscription);
         update();
       }
 
@@ -307,30 +295,135 @@ const connector = (store) => {
   }
 };
 
-const FocusMixin = SuperClass =>
-  class FocusElement extends SuperClass {
+const ControlMixin = Mixin(SuperClass => {
+  const Base = BaseMixin(SuperClass);
+
+  return class ControlElement extends Base {
     static get observedAttributes() {
-      return (super.observedAttributes || []).concat(['disabled']);
+      return Array.from(
+        (new Set(super.observedAttributes))
+          .add('valid')
+          .add('required')
+      );
     }
 
-    set disabled(value) {
-      if (value) {
-        this.setAttribute('disabled', '');
-      } else {
-        this.removeAttribute('disabled');
+    /**
+     * The role of the element.
+     * @param {string} role
+     */
+    set role(role) {
+      this.setAttribute('role', role);
+    }
+  
+    get role() {
+      return this.getAttribute('role');
+    }
+  
+    /**
+     * The name of the element.
+     * @param {string} name
+     */
+    set name(name) {
+      this.setAttribute('name', name);
+    }
+  
+    get name() {
+      return this.getAttribute('name');
+    }
+  
+    /**
+     * The value of the element.
+     * @param {string} value
+     */
+    set value(value) {
+      this.setAttribute('value', value);
+      this.toggleAttribute('valid', this.valid);
+    }
+  
+    get value() {
+      return this.getAttribute('value');
+    }
+
+    /**
+     * Specifies that the user must fill in a value
+     * for this element to be considered valid.
+     * @param {boolean} required
+     */
+    set required(required) {
+      this.toggleAttribute('required', required);
+      this.toggleAttribute('valid', this.valid);
+    }
+  
+    get required() {
+      return this.hasAttribute('required');
+    }
+  
+    get valid() {
+      return ((this.value != null) || !this.required);
+    }
+
+    attributeChangedCallback(attr, oldValue, newValue) {
+      const hasValue = newValue != null;
+      switch (attr) {
+        case 'valid':
+          this.setAttribute('aria-invalid', !hasValue);
+          break;
+        case 'required':
+          this.setAttribute('aria-required', hasValue);
+          break;
       }
+
+      if (super.attributeChangedCallback) {
+        super.attributeChangedCallback(attr, oldValue, newValue);
+      }
+    }
+
+    connectedCallback() {
+      this.setAttribute('aria-invalid', !this.valid);
+      this.setAttribute('aria-required', this.required);
+
+      if (super.connectedCallback) {
+        super.connectedCallback();
+      }
+    }
+  }
+});
+
+const FocusMixin = Mixin(SuperClass => {
+  const Base = BaseMixin(SuperClass);
+
+  const onFocus = Symbol();
+  const onBlur = Symbol();
+
+  return class FocusElement extends Base {
+    static get observedAttributes() {
+      return Array.from(
+        new Set(super.observedAttributes)
+          .add('disabled')
+      );
+    }
+
+    /**
+     * Specifies if the element is disabled.
+     * @param {boolean} disabled
+     */
+    set disabled(disabled) {
+      this.toggleAttribute('disabled', disabled);
     }
 
     get disabled() {
       return this.hasAttribute('disabled');
     }
 
-    set focused(value) {
-      if (value) {
-        this.setAttribute('focused', '');
-      } else {
-        this.removeAttribute('focused');
-      }
+    /**
+     * Specifies if the element is focused.
+     * 
+     * Note: use `.focus()` to focus the element.
+     * 
+     * @param {boolean} focused
+     */
+    set focused(focused) {
+      this.toggleAttribute('focused', focused);
     }
 
     get focused() {
@@ -357,8 +450,8 @@ const FocusMixin = SuperClass =>
     }
 
     connectedCallback() {
-      this.addEventListener('focus', this.onFocus.bind(this));
-      this.addEventListener('blur', this.onBlur.bind(this));
+      this.addEventListener('focus', this[onFocus].bind(this));
+      this.addEventListener('blur', this[onBlur].bind(this));
 
       if (!this.hasAttribute('tabindex') && !this.disabled) {
         this.setAttribute('tabindex', '0');
@@ -369,155 +462,70 @@ const FocusMixin = SuperClass =>
       }
     }
 
+    /**
+     * Focus the element, unless it is disabled.
+     * 
+     * Fires a `focus` event.
+     * 
+     * @event focus
+     */
     focus() {
-      super.focus();
-      if (!this.disabled) {
-        this.dispatchEvent(new Event('focus'));
+      if (this.disabled) {
+        return;
       }
+
+      super.focus();
+      this.dispatchEvent(new Event('focus'));
     }
 
-    onFocus(event) {
+    /**
+     * @private
+     */
+    [onFocus]() {
+      if (this.disabled) {
+        return;
+      }
+
       this.focused = true;
     }
 
+    /**
+     * Blur the element.
+     * 
+     * Fires a `blur` event.
+     * 
+     * @event blur
+     */
     blur() {
+      if (this.disabled) {
+        return;
+      }
+
       super.blur();
       this.dispatchEvent(new Event('blur'));
     }
 
-    onBlur(event) {
+    /**
+     * @private
+     */
+    [onBlur]() {
+      if (this.disabled) {
+        return;
+      }
+
       this.focused = false;
     }
-  };
-
-const MinimalMixin = SuperClass =>
-  class extends SuperClass {
-    /**
-     * Convenience function for emitting a custom event.
-     * @param {string} type
-     * @param {*} detail
-     * @param {CustomEventInit} options
-     */
-    emit(type, detail, options) {
-      const init = Object.assign(
-        {
-          bubbles: true,
-          cancelable: true,
-          detail
-        },
-        options
-      );
-      return this.dispatchEvent(new CustomEvent(type, init));
-    }
-
-    on(type, listener) {
-      this.addEventListener(type, listener);
-    }
-
-    off(type, listener) {
-      this.removeEventListener(type, listener);
-    }
-  };
+  }
+});
 
 const finalized$1 = new WeakSet();
-const observedProperties = new WeakMap();
-const batches$1 = new WeakMap();
-const debouncers$1 = new WeakMap();
-
-const warn = () => {
-  console.error('PropertiesChangedMixin requires PropertyAccessorMixin to be applied first.');
-};
-
-/**
- * A mixin that batches property changes and delivers them
- * in `propertiesChangedCallback`.
- * 
- * @param {*} SuperClass 
- */
-const PropertiesChangedMixin = SuperClass =>
-  class PropertiesChangedElement extends SuperClass {
-
-    static setup() {
-      if (finalized$1.has(this) || !has(this, 'properties')) {
-        return;
-      }
-
-      if (super.setup != null) {
-        super.setup();
-      } else {
-        warn();
-      }
-
-      if (this.observedProperties) {
-        observedProperties.set(
-          this,
-          new Set(this.observedProperties)
-        );
-      } else {
-        const properties = this.properties;
-        observedProperties.set(this, new Set(
-          Object.keys(properties)
-            .filter(key => properties[key].observe !== false)
-        ));
-      }
-
-      finalized$1.add(this);
-    }
-
-    constructor() {
-      super();
-      this.constructor.setup();
-      batches$1.set(this, empty());
-    }
-
-    set(name, newValue) {
-      const oldValue = this.get(name);
-      super.set(name, newValue);
-      if (!observedProperties.get(this.constructor).has(name)) {
-        return;
-      }
-
-      // Apply the changes to the pending batch
-      const batch = batches$1.get(this);
-      if (batch[name] != null) {
-        batch[name].newValue = newValue;
-      } else {
-        batch[name] = {
-          name,
-          oldValue,
-          newValue
-        };
-      }
-
-      // Reset the debouncer
-      clearTimeout(debouncers$1.get(this));
-      debouncers$1.set(
-        this,
-        setTimeout(() => {
-          this.propertiesChangedCallback(batch);
-          batches$1.set(this, empty());
-        }, 1)
-      );
-    }
-
-    propertiesChangedCallback(changes) {}
-
-    flushPropertyChanges() {
-      clearTimeout(debouncers$1.get(this));
-      debouncers$1.delete(this);
-      this.propertiesChangedCallback(batches$1.get(this));
-      batches$1.set(this, empty());
-    }
-  };
-
-const finalized$2 = new WeakSet();
 const properties = new WeakMap();
 
-const PropertyAccessorsMixin = SuperClass =>
-  class PropertyAccessorsElement extends SuperClass {
+const PropertyAccessorsMixin = Mixin(SuperClass => {
+  return class PropertyAccessorsElement extends SuperClass {
 
     static setup() {
-      if (finalized$2.has(this)) {
+      if (finalized$1.has(this)) {
         return;
       }
 
@@ -536,13 +544,13 @@ const PropertyAccessorsMixin = SuperClass =>
         });
       }
 
-      finalized$2.add(this);
+      finalized$1.add(this);
     }
 
     constructor() {
       super();
       this.constructor.setup();
-      properties.set(this, empty());
+      properties.set(this, {});
     }
 
     set(key, value) {
@@ -554,18 +562,14 @@ const PropertyAccessorsMixin = SuperClass =>
     }
 
     connectedCallback() {
-      const constructor = this.constructor;
-      if (!has(constructor, 'properties')) {
-        return;
-      }
-
-      const properties = constructor.properties;
+      const { constructor } = this;
+      const { properties } = constructor;
       const keys = Object.keys(properties);
       for (const key of keys) {
         const { required } = properties[key];
         let absent = this[key] == null;
         // if absent, apply default value
-        if (absent && has(properties[key], 'default')) {
+        if (absent && properties[key].hasOwnProperty('default')) {
           this[key] = properties[key].default.call(this);
         } else if (required) {
           console.warn(
@@ -579,29 +583,109 @@ const PropertyAccessorsMixin = SuperClass =>
         super.connectedCallback();
       }
     }
-  };
+  }
+});
+
+const finalized$2 = new WeakSet();
+const observedProperties = new WeakMap();
+const batches = new WeakMap();
+const debouncers = new WeakMap();
+
+/**
+ * A mixin that batches property changes and delivers them
+ * in `propertiesChangedCallback`.
+ * 
+ * @param {HTMLElement} SuperClass 
+ */
+const PropertiesChangedMixin = Mixin(SuperClass => {
+  const Base = PropertyAccessorsMixin(SuperClass);
+
+  return class PropertiesChangedElement extends Base {
+    static setup() {
+      if (finalized$2.has(this)) {
+        return;
+      }
+
+      super.setup();
+
+      if (this.observedProperties) {
+        observedProperties.set(
+          this,
+          new Set(this.observedProperties)
+        );
+      } else {
+        const { properties } = this;
+        observedProperties.set(this, new Set(
+          Object.keys(properties)
+            .filter(key => properties[key].observe !== false)
+        ));
+      }
+
+      finalized$2.add(this);
+    }
+
+    constructor() {
+      super();
+      this.constructor.setup();
+      batches.set(this, {});
+    }
+
+    set(name, newValue) {
+      const oldValue = this.get(name);
+      super.set(name, newValue);
+      if (!observedProperties.get(this.constructor).has(name)) {
+        return;
+      }
+
+      // Apply the changes to the pending batch
+      const batch = batches.get(this);
+      if (batch[name] != null) {
+        batch[name].newValue = newValue;
+      } else {
+        batch[name] = {
+          name,
+          oldValue,
+          newValue
+        };
+      }
+
+      // Reset the debouncer
+      clearTimeout(debouncers.get(this));
+      debouncers.set(
+        this,
+        setTimeout(() => {
+          this.propertiesChangedCallback(batch);
+          batches.set(this, {});
+        }, 1)
+      );
+    }
+
+    propertiesChangedCallback(changes) {}
+
+    flushPropertyChanges() {
+      clearTimeout(debouncers.get(this));
+      debouncers.delete(this);
+      this.propertiesChangedCallback(batches.get(this));
+      batches.set(this, {});
+    }
+  }
+});
 
 const finalized$3 = new WeakSet();
 const observedProperties$1 = new WeakMap();
 
-const warn$1 = (self) => {
-  console.error('PropertyChangedMixin requires PropertyAccessorMixin to be applied first.');
-  console.error('Source:', self);
-};
+const PropertyChangedMixin = Mixin(SuperClass => {
+  const Base = PropertyAccessorsMixin(SuperClass);
 
-const PropertyChangedMixin = SuperClass =>
-  class PropertyChangedElement extends SuperClass {
+  return class PropertyChangedElement extends Base {
 
     static setup() {
-      if (finalized$3.has(this) || !has(this, 'properties')) {
+      super.setup();
+
+      if (finalized$3.has(this)) {
         return;
       }
 
-      if (super.setup != null) {
-        super.setup();
-      } else {
-        warn$1(this);
-      }
 
       if (this.observedProperties) {
         observedProperties$1.set(
@@ -627,45 +711,18 @@ const PropertyChangedMixin = SuperClass =>
     set(key, value) {
       const oldValue = this[key];
       super.set(key, value);
-      if (observedProperties$1.get(this.constructor).has(key)) {
+      const { constructor } = this;
+      if (observedProperties$1.get(constructor).has(key)) {
         this.propertyChangedCallback(key, oldValue, value);
       }
     }
 
-    connectedCallback() {
-      if (super.connectedCallback != null) {
-        super.connectedCallback();
-      }
-
-      const constructor = this.constructor;
-      if (!has(constructor, 'properties')) {
-        return;
-      }
-
-      const properties = constructor.properties;
-      const keys = Object.keys(properties);
-      for (const key of keys) {
-        const property = properties[key];
-        const { required } = property;
-        const absent = this[key] == null;
-
-        // if absent, apply default value
-        if (absent && has(property, 'default')) {
-          this[key] = property.default.call(this);
-        } else if (required) {
-          console.warn(
-            `Required property '${key}' was not passed down to`,
-            this
-          );
-        }
-      }
-    }
-
     propertyChangedCallback(name, oldValue, newValue) {}
-  };
+  }
+});
 
-const StaticTemplateMixin = SuperClass =>
-  class StaticTemplateElement extends SuperClass {
+const StaticTemplateMixin = Mixin(SuperClass => {
+  return class StaticTemplateElement extends SuperClass {
     constructor() {
       super();
       if (this.constructor.hasOwnProperty('template')) {
@@ -684,7 +741,8 @@ const StaticTemplateMixin = SuperClass =>
         super.connectedCallback();
       }
     }
-  };
+  }
+});
 
 /**
  * @param {*} value Object to stringify into HTML
@@ -715,14 +773,15 @@ function html(strings, ...values) {
 }
 
 const ShadyCSS = window.ShadyCSS;
-const emulated =
-  ShadyCSS != null && (!ShadyCSS.nativeShadow || !ShadyCSS.nativeCss);
+const emulated = ShadyCSS && (
+  !ShadyCSS.nativeShadow ||
+  !ShadyCSS.nativeCss
+);
 
 const finalized$4 = new WeakSet();
 
-const ShadyTemplateMixin = SuperClass => {
+const ShadyTemplateMixin = Mixin(SuperClass => {
   const Base = StaticTemplateMixin(SuperClass);
-
   return class ShadyTemplateElement extends Base {
     constructor() {
       super();
@@ -746,7 +805,130 @@ const ShadyTemplateMixin = SuperClass => {
         }
       }
     }
-  };
-};
+  }
+});
 
-export { AttributeMixin, AttributesChangedMixin, connector, FocusMixin, MinimalMixin, PropertiesChangedMixin, PropertyAccessorsMixin, PropertyChangedMixin, ShadyTemplateMixin, StaticTemplateMixin, html };
+const onClick = Symbol();
+const onKeydown = Symbol();
+
+const ToggleMixin = Mixin(SuperClass => {
+  const Base = BaseMixin(SuperClass);
+
+  return class ToggleElement extends Base {
+    static get observedAttributes() {
+      return Array.from(
+        new Set(super.observedAttributes)
+          .add('checked')
+      );
+    }
+
+    constructor() {
+      super();
+      this[onClick] = this[onClick].bind(this);
+      this[onKeydown] = this[onKeydown].bind(this);
+    }
+
+    /**
+     * Set the checked state of the element.
+     * 
+     * The state change is not carried out
+     * if the corresponding `input` event is
+     * prevented.
+     * 
+     * @param {boolean} checked
+     */
+    set checked(checked) {
+      // emit details of the requested state, i.e.
+      // *not* the current state.
+      const event = new CustomEvent('input', {
+        bubbles: true,
+        cancelable: true,
+        detail: {
+          checked,
+          value: this.value
+        }
+      });
+
+      // if the state change was not prevented,
+      // it can be applied.
+      if (this.dispatchEvent(event)) {
+        this.toggleAttribute('checked', checked);
+        this.valid = !this.required || checked;
+      }
+    }
+  
+    get checked() {
+      return this.hasAttribute('checked');
+    }
+
+    attributeChangedCallback(attr, oldValue, newValue) {
+      if (attr === 'checked') {
+        const hasValue = newValue != null;
+        this.setAttribute('aria-checked', hasValue);
+      }
+
+      if (super.attributeChangedCallback) {
+        super.attributeChangedCallback(attr, oldValue, newValue);
+      }
+    }
+
+    connectedCallback() {
+      this.setAttribute('aria-checked', this.checked);
+
+      this.addEventListener('click', this[onClick]);
+      this.addEventListener('keydown', this[onKeydown]);
+
+      if (super.connectedCallback) {
+        super.connectedCallback();
+      }
+    }
+
+    /**
+     * Toggle the checked state of the element,
+     * unless the element is disabled.
+     * 
+     * @event input
+     */
+    toggle() {
+      if (this.disabled) {
+        return;
+      }
+      this.checked = !this.checked;
+    }
+
+    /**
+     * @private
+     */
+    [onClick]() {
+      if (this.disabled) {
+        return;
+      }
+      this.toggle();
+      this.dispatchEvent(new CustomEvent('change', {
+        bubbles: true
+      }));
+    }
+  
+    /**
+     * @private
+     */
+    [onKeydown](event) {
+      if (this.disabled) {
+        return;
+      }
+      switch (event.key) {
+        case 'Enter':
+        case ' ':
+          this.toggle();
+          this.dispatchEvent(new CustomEvent('change', {
+            bubbles: true
+          }));
+          break;
+        default:
+          return;
+      }
+    }
+  }
+});
+
+export { AttributeMixin, BaseMixin, connector, ControlMixin, FocusMixin, PropertiesChangedMixin, PropertyAccessorsMixin, PropertyChangedMixin, ShadyTemplateMixin, StaticTemplateMixin, html, ToggleMixin };
