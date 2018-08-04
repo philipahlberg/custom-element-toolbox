@@ -15,39 +15,29 @@ describe('FocusMixin', () => {
     document.body.removeChild(element);
   });
 
+  it('has a `disabled` property', () => {
+    expect('disabled' in element).to.equal(true);
+  });
+
+  it('has a `focused` property', () => {
+    expect('focused' in element).to.equal(true);
+  });
+
   it('is not disabled by default', () => {
-    expect(element.disabled).to.be.false;
-  });
-
-  it('can be disabled by property setter', () => {
-    element.disabled = true;
-    const selector = 'focus-element[disabled]';
-    expect(element.matches(selector)).to.be.true;
-  });
-
-  it('can be disabled by attribute setter', () => {
-    element.setAttribute('disabled', '');
-    expect(element.disabled).to.be.true;
+    expect(element.disabled).to.equal(false);
   });
 
   it('sets tabindex when connected', () => {
-    const selector = 'focus-element[tabindex="0"]';
-    expect(element.matches(selector)).to.be.true;
+    expect(element.hasAttribute('tabindex')).to.equal(true);
   });
 
   it('removes tabindex attribute when disabled', () => {
     element.disabled = true;
-    const selector = 'focus-element:not([tabindex])';
-    expect(element.matches(selector)).to.be.true;
+    expect(element.hasAttribute('tabindex')).to.equal(false);
   });
 
-  it('can be focused by method call', () => {
+  it('can be focused', () => {
     element.focus();
-    expect(element.focused).to.be.true;
-  });
-
-  it('can be focused by event dispatching', () => {
-    element.dispatchEvent(new Event('focus'));
     expect(element.focused).to.be.true;
   });
 
@@ -56,19 +46,12 @@ describe('FocusMixin', () => {
   // while it does work in ChromeHeadless and Edge
   it('applies a `focused` attribute when focused', () => {
     element.focus();
-    const selector = 'focus-element[focused]';
-    expect(element.matches(selector)).to.be.true;
+    expect(element.hasAttribute('focused')).to.equal(true);
   });
 
-  it('can be blurred by method call', () => {
+  it('can be blurred', () => {
     element.focus();
     element.blur();
-    expect(element.focused).to.be.false;
-  });
-
-  it('can be blurred by event dispatching', () => {
-    element.focus();
-    element.dispatchEvent(new Event('blur'));
-    expect(element.focused).to.be.false;
+    expect(element.focused).to.equal(false);
   });
 });

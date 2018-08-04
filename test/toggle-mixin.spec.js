@@ -16,8 +16,12 @@ describe('ToggleMixin', () => {
     document.body.removeChild(element);
   });
 
+  it('has a `checked` property', () => {
+    expect('checked' in element).to.equal(true);
+  });
+
   it('is not checked by default', () => {
-    expect(element.checked).to.be.false;
+    expect(element.checked).to.equal(false);
   });
 
   it('can be checked by property setter', () => {
@@ -33,14 +37,5 @@ describe('ToggleMixin', () => {
   it('can be toggled', () => {
     element.toggle();
     expect(element.checked).to.equal(true);
-  });
-
-  it('input can be prevented', () => {
-    element.addEventListener('input', e => {
-      e.preventDefault();
-    }, { once: true });
-
-    element.checked = true;
-    expect(element.checked).to.equal(false);
   });
 });

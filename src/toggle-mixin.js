@@ -1,67 +1,53 @@
 import { Mixin } from './mixin.js';
-import { BaseMixin } from './base-mixin.js';
+import { AttributesMixin } from './attributes-mixin.js';
 
 const onClick = Symbol();
 const onKeydown = Symbol();
 
 export const ToggleMixin = Mixin(SuperClass => {
-  const Base = BaseMixin(SuperClass);
+  const Base = AttributesMixin(SuperClass);
 
   return class ToggleElement extends Base {
-    static get observedAttributes() {
-      return Array.from(
-        new Set(super.observedAttributes)
-          .add('checked')
-      );
+    static get properties() {
+      return Object.assign({}, super.properties, {
+        checked: {
+          type: Boolean,
+          reflectToAttribute: true
+        }
+      });
     }
 
     constructor() {
       super();
+      this.checked = false;
       this[onClick] = this[onClick].bind(this);
       this[onKeydown] = this[onKeydown].bind(this);
     }
 
-    /**
-     * Set the checked state of the element.
-     * 
-     * The state change is not carried out
-     * if the corresponding `input` event is
-     * prevented.
-     * 
-     * @param {boolean} checked
-     */
-    set checked(checked) {
-      // emit details of the requested state, i.e.
-      // *not* the current state.
-      const event = new CustomEvent('input', {
-        bubbles: true,
-        cancelable: true,
-        detail: {
-          checked,
-          value: this.value
-        }
-      });
-
-      // if the state change was not prevented,
-      // it can be applied.
-      if (this.dispatchEvent(event)) {
-        this.toggleAttribute('checked', checked);
-        this.valid = !this.required || checked;
-      }
-    }
-  
-    get checked() {
-      return this.hasAttribute('checked');
-    }
-
     attributeChangedCallback(attr, oldValue, newValue) {
       if (attr === 'checked') {
-        const hasValue = newValue != null;
-        this.setAttribute('aria-checked', hasValue);
+        if (oldValue !== newValue) {
+          const hasValue = newValue != null;
+          this.setAttribute('aria-checked', hasValue);
+        }
       }
 
       if (super.attributeChangedCallback) {
         super.attributeChangedCallback(attr, oldValue, newValue);
+      }
+    }
+
+    propertyChangedCallback(prop, oldValue, newValue) {
+      if (prop === 'checked') {
+        if (oldValue !== newValue) {
+          this.dispatchEvent(new Event('input', {
+            bubbles: true
+          }));
+        }
+      }
+
+      if (super.propertyChangedCallback) {
+        super.propertyChangedCallback(prop, oldValue, newValue);
       }
     }
 
@@ -97,7 +83,7 @@ export const ToggleMixin = Mixin(SuperClass => {
         return;
       }
       this.toggle();
-      this.dispatchEvent(new CustomEvent('change', {
+      this.dispatchEvent(new Event('change', {
         bubbles: true
       }));
     }
@@ -113,7 +99,7 @@ export const ToggleMixin = Mixin(SuperClass => {
         case 'Enter':
         case ' ':
           this.toggle();
-          this.dispatchEvent(new CustomEvent('change', {
+          this.dispatchEvent(new Event('change', {
             bubbles: true
           }));
           break;

@@ -1,45 +1,35 @@
 import { Mixin } from './mixin.js';
-import { BaseMixin } from './base-mixin.js';
+import { AttributesMixin } from './attributes-mixin.js';
 
 export const FocusMixin = Mixin(SuperClass => {
-  const Base = BaseMixin(SuperClass);
-
-  const onFocus = Symbol();
-  const onBlur = Symbol();
+  const Base = AttributesMixin(SuperClass);
 
   return class FocusElement extends Base {
-    static get observedAttributes() {
-      return Array.from(
-        new Set(super.observedAttributes)
-          .add('disabled')
-      );
+    static get properties() {
+      return Object.assign({}, super.properties, {
+        /**
+         * Specifies if the element is disabled.
+         */
+        disabled: {
+          type: Boolean,
+          reflectToAttribute: true
+        },
+        /**
+         * Specifies if the element is focused.
+         * 
+         * Note: use `.focus()` to focus the element.
+         */
+        focused: {
+          type: Boolean,
+          reflectToAttribute: true
+        }
+      })
     }
 
-    /**
-     * Specifies if the element is disabled.
-     * @param {boolean} disabled
-     */
-    set disabled(disabled) {
-      this.toggleAttribute('disabled', disabled);
-    }
-
-    get disabled() {
-      return this.hasAttribute('disabled');
-    }
-
-    /**
-     * Specifies if the element is focused.
-     * 
-     * Note: use `.focus()` to focus the element.
-     * 
-     * @param {boolean} focused
-     */
-    set focused(focused) {
-      this.toggleAttribute('focused', focused);
-    }
-
-    get focused() {
-      return this.hasAttribute('focused');
+    constructor() {
+      super();
+      this.focused = false;
+      this.disabled = false;
     }
 
     attributeChangedCallback(attr, oldValue, newValue) {
@@ -62,9 +52,6 @@ export const FocusMixin = Mixin(SuperClass => {
     }
 
     connectedCallback() {
-      this.addEventListener('focus', this[onFocus].bind(this));
-      this.addEventListener('blur', this[onBlur].bind(this));
-
       if (!this.hasAttribute('tabindex') && !this.disabled) {
         this.setAttribute('tabindex', '0');
       }
@@ -87,18 +74,11 @@ export const FocusMixin = Mixin(SuperClass => {
       }
 
       super.focus();
-      this.dispatchEvent(new Event('focus'));
-    }
-
-    /**
-     * @private
-     */
-    [onFocus]() {
-      if (this.disabled) {
-        return;
-      }
-
       this.focused = true;
+      this.dispatchEvent(new FocusEvent('focus'));
+      this.dispatchEvent(new FocusEvent('focusin', {
+        bubbles: true
+      }));
     }
 
     /**
@@ -114,18 +94,11 @@ export const FocusMixin = Mixin(SuperClass => {
       }
 
       super.blur();
-      this.dispatchEvent(new Event('blur'));
-    }
-
-    /**
-     * @private
-     */
-    [onBlur]() {
-      if (this.disabled) {
-        return;
-      }
-
       this.focused = false;
+      this.dispatchEvent(new FocusEvent('blur'));
+      this.dispatchEvent(new FocusEvent('focusout', {
+        bubbles: true
+      }));
     }
   }
 });

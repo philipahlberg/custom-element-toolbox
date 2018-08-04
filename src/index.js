@@ -1,11 +1,9 @@
-export { AttributeMixin } from './attribute-mixin.js';
+export { AttributesMixin } from './attributes-mixin.js';
 export { BaseMixin } from './base-mixin.js';
 export { connector } from './connector.js';
 export { ControlMixin } from './control-mixin.js';
 export { FocusMixin } from './focus-mixin.js';
-export { PropertiesChangedMixin } from './properties-changed-mixin.js';
-export { PropertyAccessorsMixin } from './property-accessors-mixin.js';
-export { PropertyChangedMixin } from './property-changed-mixin.js';
+export { PropertiesMixin } from './properties-mixin.js';
 export { ShadyTemplateMixin } from './shady-template-mixin.js';
 export { StaticTemplateMixin, html } from './static-template-mixin.js';
 export { ToggleMixin } from './toggle-mixin.js';
