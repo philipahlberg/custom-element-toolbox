@@ -15,24 +15,6 @@ describe('BaseMixin', () => {
     document.body.removeChild(element);
   });
 
-  it('emits an event', () => {
-    let triggered = false;
-    element.addEventListener('event', () => {
-      triggered = true;
-    }, { once: true });
-    element.emit('event');
-    expect(triggered).to.be.true;
-  });
-
-  it('emits an event with detail', () => {
-    let detail;
-    element.addEventListener('event', (event) => {
-      detail = event.detail;
-    }, { once: true });
-    element.emit('event', { boolean: true });
-    expect(detail.boolean).to.be.true;
-  });
-
   it('toggles an attribute', () => {
     expect(element.hasAttribute('attribute')).to.be.false;
     element.toggleAttribute('attribute');
