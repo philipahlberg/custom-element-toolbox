@@ -1,10 +1,8 @@
-import { PropertyAccessorsMixin, PropertyChangedMixin } from '../dist/index.js';
+import { PropertiesMixin } from '../dist/index.js';
 
-const Base = PropertyChangedMixin(
-  PropertyAccessorsMixin(HTMLElement)
-);
+const Base = PropertiesMixin(HTMLElement);
 
-class PropertyChangedElement extends Base {
+class PropertiesElement extends Base {
   static get properties() {
     return {
       foo: {
@@ -31,13 +29,13 @@ class PropertyChangedElement extends Base {
   }
 }
 
-customElements.define('property-changed-element', PropertyChangedElement);
+customElements.define('properties-element', PropertiesElement);
 
-describe('PropertyChangedMixin', () => {
+describe('PropertiesMixin', () => {
   let element;
 
   beforeEach(() => {
-    element = new PropertyChangedElement();
+    element = new PropertiesElement();
     document.body.appendChild(element);
   });
 
