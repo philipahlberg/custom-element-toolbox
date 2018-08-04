@@ -1,11 +1,9 @@
-import { AttributeMixin, PropertyAccessorsMixin } from '../dist/index.js';
+import { AttributesMixin } from '../dist/index.js';
 import { snapshot } from './utils.js';
 
-const Base = AttributeMixin(
-  PropertyAccessorsMixin(HTMLElement)
-);
+const Base = AttributesMixin(HTMLElement);
 
-class AttributeElement extends Base {
+class AttributesElement extends Base {
   static get properties() {
     return {
       string: {
@@ -28,14 +26,14 @@ class AttributeElement extends Base {
   }
 }
 
-customElements.define('attribute-element', AttributeElement);
+customElements.define('attributes-element', AttributesElement);
 
 describe('AttributeMixin', () => {
   let element;
   let props;
 
   beforeEach(() => {
-    element = new AttributeElement();
+    element = new AttributesElement();
     props = snapshot(element);
     document.body.appendChild(element);
   });
