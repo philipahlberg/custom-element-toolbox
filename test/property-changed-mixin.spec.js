@@ -1,15 +1,12 @@
-import { PropertiesMixin } from '../dist/index.js';
+import { PropertyChangedMixin } from '../dist/index.js';
 
-const Base = PropertiesMixin(HTMLElement);
+const Base = PropertyChangedMixin(HTMLElement);
 
-class PropertiesElement extends Base {
+class PropertyChangedElement extends Base {
   static get properties() {
     return {
       foo: {
         type: String
-      },
-      bar: {
-        type: Number
       }
     }
   }
@@ -29,13 +26,13 @@ class PropertiesElement extends Base {
   }
 }
 
-customElements.define('properties-element', PropertiesElement);
+customElements.define('property-changed-element', PropertyChangedElement);
 
-describe('PropertiesMixin', () => {
+describe('PropertyChangedMixin', () => {
   let element;
 
   beforeEach(() => {
-    element = new PropertiesElement();
+    element = new PropertyChangedElement();
     document.body.appendChild(element);
   });
 
@@ -43,11 +40,8 @@ describe('PropertiesMixin', () => {
     document.body.removeChild(element);
   });
 
-  it('observes a single property synchronously', () => {
-    expect(element.callCount).to.equal(0);
-
+  it('reacts to property changes', () => {
     element.foo = 'string';
-
     expect(element.callCount).to.equal(1);
     expect(element.change.name).to.equal('foo');
     expect(element.change.oldValue).to.equal(undefined);
