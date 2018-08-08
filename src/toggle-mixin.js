@@ -1,18 +1,22 @@
 import { Mixin } from './mixin.js';
-import { AttributesMixin } from './attributes-mixin.js';
+import { BaseMixin } from './base-mixin.js';
+import { PropertiesMixin } from './properties-mixin.js';
 
-const onClick = Symbol();
-const onKeydown = Symbol();
 
 export const ToggleMixin = Mixin(SuperClass => {
-  const Base = AttributesMixin(SuperClass);
+  const Base = PropertiesMixin(BaseMixin(SuperClass));
+
+  const onClick = Symbol();
+  const onKeydown = Symbol();
+  const checkedChanged = Symbol();
 
   return class ToggleElement extends Base {
     static get properties() {
       return Object.assign({}, super.properties, {
         checked: {
           type: Boolean,
-          reflectToAttribute: true
+          reflectToAttribute: true,
+          observer: checkedChanged
         }
       });
     }
@@ -24,36 +28,16 @@ export const ToggleMixin = Mixin(SuperClass => {
       this[onKeydown] = this[onKeydown].bind(this);
     }
 
-    attributeChangedCallback(attr, oldValue, newValue) {
-      if (attr === 'checked') {
-        if (oldValue !== newValue) {
-          const hasValue = newValue != null;
-          this.setAttribute('aria-checked', hasValue);
-        }
-      }
+    [checkedChanged](newValue, oldValue) {
+      if (newValue === oldValue) return;
 
-      if (super.attributeChangedCallback) {
-        super.attributeChangedCallback(attr, oldValue, newValue);
-      }
-    }
-
-    propertyChangedCallback(prop, oldValue, newValue) {
-      if (prop === 'checked') {
-        if (oldValue !== newValue) {
-          this.dispatchEvent(new Event('input', {
-            bubbles: true
-          }));
-        }
-      }
-
-      if (super.propertyChangedCallback) {
-        super.propertyChangedCallback(prop, oldValue, newValue);
-      }
+      this.setAttribute('aria-checked', String(newValue));
+      this.dispatchEvent(new Event('input', {
+        bubbles: true
+      }));
     }
 
     connectedCallback() {
-      this.setAttribute('aria-checked', this.checked);
-
       this.addEventListener('click', this[onClick]);
       this.addEventListener('keydown', this[onKeydown]);
 

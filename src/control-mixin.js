@@ -1,8 +1,11 @@
 import { Mixin } from './mixin.js';
-import { AttributesMixin } from './attributes-mixin.js';
+import { BaseMixin } from './base-mixin.js';
+import { PropertiesMixin } from './properties-mixin.js';
 
 export const ControlMixin = Mixin(SuperClass => {
-  const Base = AttributesMixin(SuperClass);
+  const Base = PropertiesMixin(BaseMixin(SuperClass));
+  const valueChanged = Symbol();
+  const requiredChanged = Symbol();
 
   return class ControlElement extends Base {
     static get properties() {
@@ -26,7 +29,8 @@ export const ControlMixin = Mixin(SuperClass => {
          */
         value: {
           type: String,
-          reflectToAttribute: true
+          reflectToAttribute: true,
+          observer: valueChanged
         },
         /**
          * Specifies that the user must fill in a value
@@ -34,42 +38,34 @@ export const ControlMixin = Mixin(SuperClass => {
          */
         required: {
           type: Boolean,
-          reflectToAttribute: true
+          reflectToAttribute: true,
+          observer: requiredChanged
         }
-      })
+      });
+    }
+
+    constructor() {
+      super();
+      this.required = false;
     }
  
     get valid() {
       return this.value != null || !this.required;
     }
 
-    attributeChangedCallback(attr, oldValue, newValue) {
-      const hasValue = newValue != null;
-      switch (attr) {
-        case 'valid':
-          this.setAttribute('aria-invalid', !hasValue);
-          break;
-        case 'required':
-          this.setAttribute('aria-required', hasValue);
-        // deliberately not breaking
-        case 'value':
-          this.toggleAttribute('valid', this.valid);
-          break;
-      }
+    [valueChanged](newValue, oldValue) {
+      if (newValue === oldValue) return;
 
-      if (super.attributeChangedCallback) {
-        super.attributeChangedCallback(attr, oldValue, newValue);
-      }
+      this.setAttribute('aria-invalid', !this.valid);
+      this.toggleAttribute('valid', this.valid);
     }
 
-    connectedCallback() {
-      this.toggleAttribute('valid', this.valid);
-      this.setAttribute('aria-invalid', !this.valid);
-      this.setAttribute('aria-required', this.required);
+    [requiredChanged](newValue, oldValue) {
+      if (newValue === oldValue) return;
 
-      if (super.connectedCallback) {
-        super.connectedCallback();
-      }
+      this.setAttribute('aria-required', newValue);
+      this.setAttribute('aria-invalid', !this.valid);
+      this.toggleAttribute('valid', this.valid);
     }
   }
 });

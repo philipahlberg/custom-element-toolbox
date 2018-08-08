@@ -1,8 +1,10 @@
 import { Mixin } from './mixin.js';
-import { AttributesMixin } from './attributes-mixin.js';
+import { BaseMixin } from './base-mixin.js';
+import { PropertiesMixin } from './properties-mixin.js';
 
 export const FocusMixin = Mixin(SuperClass => {
-  const Base = AttributesMixin(SuperClass);
+  const Base = PropertiesMixin(BaseMixin(SuperClass));
+  const disabledChanged = Symbol();
 
   return class FocusElement extends Base {
     static get properties() {
@@ -12,7 +14,8 @@ export const FocusMixin = Mixin(SuperClass => {
          */
         disabled: {
           type: Boolean,
-          reflectToAttribute: true
+          reflectToAttribute: true,
+          observer: disabledChanged
         },
         /**
          * Specifies if the element is focused.
@@ -23,7 +26,7 @@ export const FocusMixin = Mixin(SuperClass => {
           type: Boolean,
           reflectToAttribute: true
         }
-      })
+      });
     }
 
     constructor() {
@@ -32,32 +35,17 @@ export const FocusMixin = Mixin(SuperClass => {
       this.disabled = false;
     }
 
-    attributeChangedCallback(attr, oldValue, newValue) {
-      if (attr === 'disabled') {
-        const hasValue = newValue != null;
-        this.setAttribute('aria-disabled', hasValue);
-        if (hasValue) {
-          // Remove attribute entirely to ensure that the
-          // element is no longer focusable
-          this.removeAttribute('tabindex');
-          this.blur();
-        } else {
-          this.setAttribute('tabindex', '0');
-        }
-      }
+    [disabledChanged](newValue, oldValue) {
+      if (newValue === oldValue) return;
 
-      if (super.attributeChangedCallback) {
-        super.attributeChangedCallback(attr, oldValue, newValue);
-      }
-    }
-
-    connectedCallback() {
-      if (!this.hasAttribute('tabindex') && !this.disabled) {
+      this.setAttribute('aria-disabled', String(newValue));
+      if (newValue) {
+        // Remove attribute entirely to ensure that the
+        // element is no longer focusable
+        this.removeAttribute('tabindex');
+        this.blur();
+      } else {
         this.setAttribute('tabindex', '0');
-      }
-
-      if (super.connectedCallback) {
-        super.connectedCallback();
       }
     }
 
