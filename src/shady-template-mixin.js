@@ -7,15 +7,15 @@ const emulated = ShadyCSS && (
   !ShadyCSS.nativeCss
 );
 
-const finalized = new WeakSet();
-
 export const ShadyTemplateMixin = Mixin(SuperClass => {
   const Base = StaticTemplateMixin(SuperClass);
+  let finalized = false;
+
   return class ShadyTemplateElement extends Base {
     constructor() {
       super();
       const ctor = this.constructor;
-      if (!ctor.template || finalized.has(ctor)) {
+      if (finalized || ctor.template == null) {
         return;
       }
 
@@ -23,15 +23,13 @@ export const ShadyTemplateMixin = Mixin(SuperClass => {
         ShadyCSS.prepareTemplate(ctor.template, this.localName);
       }
 
-      finalized.add(ctor);
+      finalized = true;
     }
 
     connectedCallback() {
       super.connectedCallback();
-      if (finalized.has(this.constructor)) {
-        if (emulated) {
-          ShadyCSS.styleElement(this);
-        }
+      if (finalized && emulated) {
+        ShadyCSS.styleElement(this);
       }
     }
   }
