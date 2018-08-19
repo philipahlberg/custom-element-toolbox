@@ -192,9 +192,7 @@ const PropertyObserverMixin = Mixin(SuperClass => {
  * @param str A PascalCase og camelCase string
  */
 function toDashCase(str) {
-  return str
-    .replace(/([a-zA-Z])(?=[A-Z])/g, '$1-')
-    .toLowerCase();
+  return str.replace(/([a-zA-Z])(?=[A-Z])/g, '$1-').toLowerCase();
 }
 
 /**
@@ -240,15 +238,13 @@ const PropertyReflectionMixin = Mixin(SuperClass => {
       const reflect = conf.reflectToAttribute;
       if (reflect) {
         const attribute = names.get(property);
-        if (!newValue) {
+        if (newValue === false) {
           this.removeAttribute(attribute);
         } else {
-          switch (type) {
-            case Boolean:
-              this.setAttribute(attribute, '');
-              break;
-            default:
-              this.setAttribute(attribute, newValue);
+          if (type === Boolean) {
+            this.setAttribute(attribute, '');
+          } else {
+            this.setAttribute(attribute, newValue);
           }
         }
       }
@@ -321,12 +317,14 @@ const ControlMixin = Mixin(SuperClass => {
 
     [valueChanged](newValue, oldValue) {
       if (newValue === oldValue) return;
+
       this.setAttribute('aria-invalid', !this.valid);
       this.toggleAttribute('valid', this.valid);
     }
 
     [requiredChanged](newValue, oldValue) {
       if (newValue === oldValue) return;
+
       this.setAttribute('aria-required', newValue);
       this.setAttribute('aria-invalid', !this.valid);
       this.toggleAttribute('valid', this.valid);
@@ -368,9 +366,7 @@ const FocusMixin = Mixin(SuperClass => {
     }
 
     [disabledChanged](newValue, oldValue) {
-      if (newValue === oldValue) {
-        return;
-      }
+      if (newValue === oldValue) return;
 
       this.setAttribute('aria-disabled', String(newValue));
       if (newValue) {
@@ -538,16 +534,13 @@ const ToggleMixin = Mixin(SuperClass => {
     [checkedChanged](newValue, oldValue) {
       if (newValue === oldValue) return;
 
-      const hasValue = newValue != null;
-      this.setAttribute('aria-chacked', hasValue);
+      this.setAttribute('aria-checked', String(newValue));
       this.dispatchEvent(new Event('input', {
         bubbles: true
       }));
     }
 
     connectedCallback() {
-      this.setAttribute('aria-checked', this.checked);
-
       this.addEventListener('click', this[onClick]);
       this.addEventListener('keydown', this[onKeydown]);
 

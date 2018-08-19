@@ -42,27 +42,39 @@ describe('PropertyReflectionMixin', () => {
     document.body.removeChild(element);
   });
 
-  it('reflects `String` attributes', () => {
-    expect(props.string).to.equal(undefined);
+  it('does not reflect before values are initialized', () => {
     expect(element.hasAttribute('string')).to.equal(false);
+    expect(element.hasAttribute('number')).to.equal(false);
+    expect(element.hasAttribute('boolean')).to.equal(false);
+    expect(element.hasAttribute('camel-case')).to.equal(false);
+  });
+
+  it('reflects `String` types', () => {
     element.string = 'value';
     expect(element.getAttribute('string')).to.equal('value');
   });
 
-  it('reflects `Number` attributes', () => {
-    expect(props.number).to.equal(undefined);
-    expect(element.hasAttribute('number')).to.equal(false);
+  it('reflects falsey `String` values', () => {
+    element.string = '';
+    expect(element.getAttribute('string')).to.equal('');
+  });
+
+  it('reflects `Number` types', () => {
     element.number = 10;
     expect(element.getAttribute('number')).to.equal('10');
   });
 
-  it('reflects `Boolean` attributes', () => {
-    expect(props.boolean).to.equal(undefined);
-    expect(element.hasAttribute('boolean')).to.equal(false);
+  it('reflects `Number` types', () => {
+    element.number = 0;
+    expect(element.getAttribute('number')).to.equal('0');
+  });
+
+
+  it('reflects `Boolean` values', () => {
     element.boolean = true;
     expect(element.getAttribute('boolean')).to.equal('');
     element.boolean = false;
-    expect(element.hasAttribute('boolean')).to.equal(false);
+    expect(element.getAttribute('boolean')).to.equal(null);
   });
 
   it('converts camelCase to dash-case', () => {

@@ -45,15 +45,13 @@ export const PropertyReflectionMixin = Mixin(SuperClass => {
       const reflect = conf.reflectToAttribute;
       if (reflect) {
         const attribute = names.get(property);
-        if (!newValue) {
+        if (newValue === false) {
           this.removeAttribute(attribute);
         } else {
-          switch (type) {
-            case Boolean:
-              this.setAttribute(attribute, '');
-              break;
-            default:
-              this.setAttribute(attribute, newValue);
+          if (type === Boolean) {
+            this.setAttribute(attribute, '');
+          } else {
+            this.setAttribute(attribute, newValue);
           }
         }
       }
