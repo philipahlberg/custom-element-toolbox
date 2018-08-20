@@ -268,11 +268,33 @@ const PropertyReflectionMixin = Mixin(SuperClass => {
   }
 });
 
+const PropertyDefaultMixin = Mixin(SuperClass => {
+  const Base = PropertyChangedMixin(SuperClass);
+
+  return class extends Base {
+    connectedCallback() {
+      super.connectedCallback();
+      const ctor = this.constructor;
+      const properties = ctor.properties;
+      const keys = Object.keys(properties);
+
+      for (const key of keys) {
+        if (this[key] != null) continue;
+        const property = properties[key];
+        if (property.default == null) continue;
+        this[key] = property.default();
+      }
+    }
+  }
+});
+
 const PropertiesMixin = Mixin(SuperClass => {
-  const Base = PropertyReflectionMixin(
-    PropertyObserverMixin(
-      PropertyChangedMixin(
-        SuperClass
+  const Base = PropertyDefaultMixin(
+    PropertyReflectionMixin(
+      PropertyObserverMixin(
+        PropertyChangedMixin(
+          SuperClass
+        )
       )
     )
   );
@@ -610,4 +632,4 @@ const ToggleMixin = Mixin(SuperClass => {
   }
 });
 
-export { BaseMixin, connector, ControlMixin, FocusMixin, PropertiesMixin, PropertyChangedMixin, PropertyObserverMixin, PropertyReflectionMixin, ShadyTemplateMixin, StaticTemplateMixin, html, ToggleMixin };
+export { BaseMixin, connector, ControlMixin, FocusMixin, PropertiesMixin, PropertyChangedMixin, PropertyDefaultMixin, PropertyObserverMixin, PropertyReflectionMixin, ShadyTemplateMixin, StaticTemplateMixin, html, ToggleMixin };

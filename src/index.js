@@ -4,6 +4,7 @@ export { ControlMixin } from './control-mixin.js';
 export { FocusMixin } from './focus-mixin.js';
 export { PropertiesMixin } from './properties-mixin.js';
 export { PropertyChangedMixin } from './property-changed-mixin.js';
+export { PropertyDefaultMixin } from './property-default-mixin.js';
 export { PropertyObserverMixin } from './property-observer-mixin.js';
 export { PropertyReflectionMixin } from './property-reflection-mixin.js';
 export { ShadyTemplateMixin } from './shady-template-mixin.js';
