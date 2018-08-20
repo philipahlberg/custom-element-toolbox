@@ -10,13 +10,13 @@ import { toDashCase } from './shared.js';
 export const PropertyReflectionMixin = Mixin(SuperClass => {
   const Base = PropertyChangedMixin(SuperClass);
   const names = new Map();
-  let finalized = false;
+  const finalized = new WeakSet();
 
   return class extends Base {
     static setup() {
       super.setup();
 
-      if (finalized) {
+      if (finalized.has(this)) {
         return;
       }
 
@@ -30,7 +30,7 @@ export const PropertyReflectionMixin = Mixin(SuperClass => {
         }
       }
 
-      finalized = true;
+      finalized.add(this);
     }
 
     propertyChangedCallback(property, oldValue, newValue) {

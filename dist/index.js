@@ -99,11 +99,11 @@ const connector = (store) => {
 const PropertyChangedMixin = Mixin(SuperClass => {
 
   const data = new WeakMap();
-  let finalized = false;
+  const finalized = new WeakSet();
 
   return class extends SuperClass {
     static setup() {
-      if (finalized) {
+      if (finalized.has(this)) {
         return;
       }
 
@@ -132,7 +132,7 @@ const PropertyChangedMixin = Mixin(SuperClass => {
         });
       }
 
-      finalized = true;
+      finalized.add(this);
     }
 
     constructor() {
@@ -219,13 +219,13 @@ function toDashCase(str) {
 const PropertyReflectionMixin = Mixin(SuperClass => {
   const Base = PropertyChangedMixin(SuperClass);
   const names = new Map();
-  let finalized = false;
+  const finalized = new WeakSet();
 
   return class extends Base {
     static setup() {
       super.setup();
 
-      if (finalized) {
+      if (finalized.has(this)) {
         return;
       }
 
@@ -239,7 +239,7 @@ const PropertyReflectionMixin = Mixin(SuperClass => {
         }
       }
 
-      finalized = true;
+      finalized.add(this);
     }
 
     propertyChangedCallback(property, oldValue, newValue) {
@@ -488,34 +488,31 @@ function html(strings, ...values) {
   return template;
 }
 
-const ShadyCSS = window.ShadyCSS;
-const emulated = ShadyCSS && (
-  !ShadyCSS.nativeShadow ||
-  !ShadyCSS.nativeCss
-);
-
 const ShadyTemplateMixin = Mixin(SuperClass => {
   const Base = StaticTemplateMixin(SuperClass);
-  let finalized = false;
+  const finalized = new WeakSet();
+  const ShadyCSS = window.ShadyCSS;
+  const emulated = ShadyCSS && (
+    !ShadyCSS.nativeShadow ||
+    !ShadyCSS.nativeCss
+  );
 
   return class ShadyTemplateElement extends Base {
+    static prepareTemplate(name) {
+      if (!emulated) return;
+      if (finalized.has(this)) return;
+      ShadyCSS.prepareTemplate(this.template, name);
+      finalized.add(this);
+    }
+
     constructor() {
       super();
-      const ctor = this.constructor;
-      if (finalized || ctor.template == null) {
-        return;
-      }
-
-      if (emulated) {
-        ShadyCSS.prepareTemplate(ctor.template, this.localName);
-      }
-
-      finalized = true;
+      this.constructor.prepareTemplate(this.localName.toLowerCase());
     }
 
     connectedCallback() {
       super.connectedCallback();
-      if (finalized && emulated) {
+      if (emulated) {
         ShadyCSS.styleElement(this);
       }
     }

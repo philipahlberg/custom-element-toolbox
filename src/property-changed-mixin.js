@@ -3,11 +3,11 @@ import { Mixin } from './mixin.js';
 export const PropertyChangedMixin = Mixin(SuperClass => {
 
   const data = new WeakMap();
-  let finalized = false;
+  const finalized = new WeakSet();
 
   return class extends SuperClass {
     static setup() {
-      if (finalized) {
+      if (finalized.has(this)) {
         return;
       }
 
@@ -36,7 +36,7 @@ export const PropertyChangedMixin = Mixin(SuperClass => {
         });
       }
 
-      finalized = true;
+      finalized.add(this);
     }
 
     constructor() {
