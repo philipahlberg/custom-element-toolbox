@@ -73,5 +73,21 @@ export const PropertyChangedMixin = Mixin(SuperClass => {
     }
 
     propertyChangedCallback(key, oldValue, newValue) {}
+
+    set(properties) {
+      const entries = Object.entries(properties);
+      const oldValues = {};
+      const currentValues = data.get(this);
+
+      for (const [key, value] of entries) {
+        oldValues[key] = currentValues[key];
+        currentValues[key] = value;
+      }
+
+      for (const [key, newValue] of entries) {
+        const oldValue = oldValues[key];
+        this.propertyChangedCallback(key, oldValue, newValue);
+      }
+    }
   }
 });

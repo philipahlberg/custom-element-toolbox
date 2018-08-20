@@ -7,6 +7,9 @@ class PropertyChangedElement extends Base {
     return {
       foo: {
         type: String
+      },
+      bar: {
+        type: Number
       }
     }
   }
@@ -14,6 +17,8 @@ class PropertyChangedElement extends Base {
   constructor() {
     super();
     this.callCount = 0;
+    this.change = {};
+    this.changes = [];
   }
 
   propertyChangedCallback(name, oldValue, newValue) {
@@ -23,6 +28,7 @@ class PropertyChangedElement extends Base {
       oldValue,
       newValue
     };
+    this.changes.push(this.change);
   }
 }
 
@@ -46,5 +52,20 @@ describe('PropertyChangedMixin', () => {
     expect(element.change.name).to.equal('foo');
     expect(element.change.oldValue).to.equal(undefined);
     expect(element.change.newValue).to.equal('string');
+  });
+
+  it('can use `set` to batch property changes', () => {
+    element.set({
+      foo: 'string',
+      bar: 1
+    });
+
+    const [foo, bar] = element.changes.slice(-2);
+
+    expect(element.callCount).to.equal(2);
+    expect(foo.oldValue).to.equal(undefined);
+    expect(foo.newValue).to.equal('string');
+    expect(bar.oldValue).to.equal(undefined);
+    expect(bar.newValue).to.equal(1);
   });
 });
