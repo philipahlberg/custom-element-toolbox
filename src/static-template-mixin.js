@@ -11,7 +11,6 @@ export const StaticTemplateMixin = Mixin(SuperClass => {
         if (this.shadowRoot == null) {
           this.attachShadow({ mode: 'open' });
         }
-        const template = template;
         const content = template.content;
         const clone = content.cloneNode(true);
         this.shadowRoot.appendChild(clone);
