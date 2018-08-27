@@ -17,7 +17,7 @@ const Mixin = Mix => {
   }
 };
 
-const BaseMixin = Mixin(SuperClass => {
+const Base = Mixin(SuperClass => {
   return class BaseElement extends SuperClass {
     /**
      * Toggle a boolean attribute (removing it if it is present
@@ -96,7 +96,7 @@ const connector = (store) => {
   }
 };
 
-const PropertyChangedMixin = Mixin(SuperClass => {
+const PropertyChanged = Mixin(SuperClass => {
   const data = new WeakMap();
   const finalized = new WeakSet();
 
@@ -148,15 +148,11 @@ const PropertyChangedMixin = Mixin(SuperClass => {
       // and assigning to the property will not trigger
       // accessors.
 
-      // To remedy this, we save, delete and reapply
-      // all declared properties.
+      // To remedy this, we save and delete all properties
+      // on the instance and reapply them to the prototype.
       const properties = this.constructor.properties;
       const keys = Object.keys(properties);
       for (const key of keys) {
-        // Properties defined through `defineProperty`
-        // are on the prototype, not the instance.
-        // Thus, if the property is present on the
-        // instance, it needs to be upgraded.
         if (!this.hasOwnProperty(key)) continue;
         const value = this[key];
         delete this[key];
@@ -188,8 +184,8 @@ const PropertyChangedMixin = Mixin(SuperClass => {
   }
 });
 
-const PropertyObserverMixin = Mixin(SuperClass => {
-  const Base = PropertyChangedMixin(SuperClass);
+const PropertyObserver = Mixin(SuperClass => {
+  const Base = PropertyChanged(SuperClass);
 
   return class extends Base {
     propertyChangedCallback(key, oldValue, newValue) {
@@ -216,8 +212,8 @@ function toDashCase(str) {
  * 
  * Maps `camelCase` properties to `dash-case` attributes.
  */
-const PropertyReflectionMixin = Mixin(SuperClass => {
-  const Base = PropertyChangedMixin(SuperClass);
+const PropertyReflection = Mixin(SuperClass => {
+  const Base = PropertyChanged(SuperClass);
   const names = new Map();
   const finalized = new WeakSet();
 
@@ -235,6 +231,9 @@ const PropertyReflectionMixin = Mixin(SuperClass => {
       for (const key of keys) {
         const reflect = properties[key].reflectToAttribute;
         if (reflect) {
+          // Names are shared between all instances
+          // so we might have already translated this key.
+          if (names.has(key)) continue;
           const attribute = toDashCase(key);
           names.set(key, attribute);
         }
@@ -245,9 +244,7 @@ const PropertyReflectionMixin = Mixin(SuperClass => {
 
     propertyChangedCallback(property, oldValue, newValue) {
       super.propertyChangedCallback(property, oldValue, newValue);
-      if (oldValue === newValue) {
-        return;
-      }
+      if (oldValue === newValue) return;
 
       const properties = this.constructor.properties;
       const conf = properties[property];
@@ -269,8 +266,8 @@ const PropertyReflectionMixin = Mixin(SuperClass => {
   }
 });
 
-const PropertyDefaultMixin = Mixin(SuperClass => {
-  const Base = PropertyChangedMixin(SuperClass);
+const PropertyDefault = Mixin(SuperClass => {
+  const Base = PropertyChanged(SuperClass);
 
   return class extends Base {
     connectedCallback() {
@@ -289,11 +286,11 @@ const PropertyDefaultMixin = Mixin(SuperClass => {
   }
 });
 
-const PropertiesMixin = Mixin(SuperClass => {
-  const Base = PropertyDefaultMixin(
-    PropertyReflectionMixin(
-      PropertyObserverMixin(
-        PropertyChangedMixin(
+const Properties = Mixin(SuperClass => {
+  const Base = PropertyDefault(
+    PropertyReflection(
+      PropertyObserver(
+        PropertyChanged(
           SuperClass
         )
       )
@@ -303,12 +300,12 @@ const PropertiesMixin = Mixin(SuperClass => {
   return class PropertiesElement extends Base {}
 });
 
-const ControlMixin = Mixin(SuperClass => {
-  const Base = PropertiesMixin(BaseMixin(SuperClass));
+const Control = Mixin(SuperClass => {
+  const Base$$1 = Properties(Base$$1(SuperClass));
   const valueChanged = Symbol();
   const requiredChanged = Symbol();
 
-  return class ControlElement extends Base {
+  return class ControlElement extends Base$$1 {
     static get properties() {
       return Object.assign({}, super.properties, {
         /**
@@ -371,11 +368,11 @@ const ControlMixin = Mixin(SuperClass => {
   }
 });
 
-const FocusMixin = Mixin(SuperClass => {
-  const Base = PropertiesMixin(BaseMixin(SuperClass));
+const Focus = Mixin(SuperClass => {
+  const Base$$1 = Properties(Base$$1(SuperClass));
   const disabledChanged = Symbol();
 
-  return class FocusElement extends Base {
+  return class FocusElement extends Base$$1 {
     static get properties() {
       return Object.assign({}, super.properties, {
         /**
@@ -460,7 +457,7 @@ const FocusMixin = Mixin(SuperClass => {
   }
 });
 
-const StaticTemplateMixin = Mixin(SuperClass => {
+const StaticTemplate = Mixin(SuperClass => {
   const mounted = new WeakSet();
 
   return class StaticTemplateElement extends SuperClass {
@@ -512,8 +509,8 @@ function html(strings, ...values) {
   return template;
 }
 
-const ShadyTemplateMixin = Mixin(SuperClass => {
-  const Base = StaticTemplateMixin(SuperClass);
+const ShadyTemplate = Mixin(SuperClass => {
+  const Base = StaticTemplate(SuperClass);
   const finalized = new WeakSet();
   const ShadyCSS = window.ShadyCSS;
   const emulated = ShadyCSS && (
@@ -544,14 +541,14 @@ const ShadyTemplateMixin = Mixin(SuperClass => {
   }
 });
 
-const ToggleMixin = Mixin(SuperClass => {
-  const Base = PropertiesMixin(BaseMixin(SuperClass));
+const Toggle = Mixin(SuperClass => {
+  const Base$$1 = Properties(Base$$1(SuperClass));
 
   const onClick = Symbol();
   const onKeydown = Symbol();
   const checkedChanged = Symbol();
 
-  return class ToggleElement extends Base {
+  return class ToggleElement extends Base$$1 {
     static get properties() {
       return Object.assign({}, super.properties, {
         checked: {
@@ -635,4 +632,4 @@ const ToggleMixin = Mixin(SuperClass => {
   }
 });
 
-export { BaseMixin, connector, ControlMixin, FocusMixin, PropertiesMixin, PropertyChangedMixin, PropertyDefaultMixin, PropertyObserverMixin, PropertyReflectionMixin, ShadyTemplateMixin, StaticTemplateMixin, html, ToggleMixin };
+export { Base, Base as BaseMixin, connector, Control, Control as ControlMixin, Focus, Focus as FocusMixin, Properties, Properties as PropertiesMixin, PropertyChanged, PropertyChanged as PropertyChangedMixin, PropertyDefault, PropertyDefault as PropertyDefaultMixin, PropertyObserver, PropertyObserver as PropertyObserverMixin, PropertyReflection, PropertyReflection as PropertyReflectionMixin, ShadyTemplate, ShadyTemplate as ShadyTemplateMixin, StaticTemplate, html, StaticTemplate as StaticTemplateMixin, Toggle, Toggle as ToggleMixin };

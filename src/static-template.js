@@ -1,6 +1,6 @@
 import { Mixin } from './mixin.js';
 
-export const StaticTemplateMixin = Mixin(SuperClass => {
+export const StaticTemplate = Mixin(SuperClass => {
   const mounted = new WeakSet();
 
   return class StaticTemplateElement extends SuperClass {
@@ -51,3 +51,5 @@ export function html(strings, ...values) {
   );
   return template;
 }
+
+export { StaticTemplate as StaticTemplateMixin };

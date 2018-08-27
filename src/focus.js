@@ -1,9 +1,9 @@
 import { Mixin } from './mixin.js';
-import { BaseMixin } from './base-mixin.js';
-import { PropertiesMixin } from './properties-mixin.js';
+import { Base } from './base.js';
+import { Properties } from './properties.js';
 
-export const FocusMixin = Mixin(SuperClass => {
-  const Base = PropertiesMixin(BaseMixin(SuperClass));
+export const Focus = Mixin(SuperClass => {
+  const Base = Properties(Base(SuperClass));
   const disabledChanged = Symbol();
 
   return class FocusElement extends Base {
@@ -90,3 +90,5 @@ export const FocusMixin = Mixin(SuperClass => {
     }
   }
 });
+
+export { Focus as FocusMixin };

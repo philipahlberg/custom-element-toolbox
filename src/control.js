@@ -1,9 +1,9 @@
 import { Mixin } from './mixin.js';
-import { BaseMixin } from './base-mixin.js';
-import { PropertiesMixin } from './properties-mixin.js';
+import { Base } from './base.js';
+import { Properties } from './properties.js';
 
-export const ControlMixin = Mixin(SuperClass => {
-  const Base = PropertiesMixin(BaseMixin(SuperClass));
+export const Control = Mixin(SuperClass => {
+  const Base = Properties(Base(SuperClass));
   const valueChanged = Symbol();
   const requiredChanged = Symbol();
 
@@ -69,3 +69,5 @@ export const ControlMixin = Mixin(SuperClass => {
     }
   }
 });
+
+export { Control as ControlMixin };

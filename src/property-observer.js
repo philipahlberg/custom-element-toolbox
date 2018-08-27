@@ -1,8 +1,8 @@
 import { Mixin } from './mixin.js';
-import { PropertyChangedMixin } from './property-changed-mixin.js';
+import { PropertyChanged } from './property-changed.js';
 
-export const PropertyObserverMixin = Mixin(SuperClass => {
-  const Base = PropertyChangedMixin(SuperClass);
+export const PropertyObserver = Mixin(SuperClass => {
+  const Base = PropertyChanged(SuperClass);
 
   return class extends Base {
     propertyChangedCallback(key, oldValue, newValue) {
@@ -15,3 +15,5 @@ export const PropertyObserverMixin = Mixin(SuperClass => {
     }
   }
 });
+
+export { PropertyObserver as PropertyObserverMixin };

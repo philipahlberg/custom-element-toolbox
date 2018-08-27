@@ -1,10 +1,9 @@
 import { Mixin } from './mixin.js';
-import { BaseMixin } from './base-mixin.js';
-import { PropertiesMixin } from './properties-mixin.js';
+import { Base } from './base.js';
+import { Properties } from './properties.js';
 
-
-export const ToggleMixin = Mixin(SuperClass => {
-  const Base = PropertiesMixin(BaseMixin(SuperClass));
+export const Toggle = Mixin(SuperClass => {
+  const Base = Properties(Base(SuperClass));
 
   const onClick = Symbol();
   const onKeydown = Symbol();
@@ -93,3 +92,5 @@ export const ToggleMixin = Mixin(SuperClass => {
     }
   }
 });
+
+export { Toggle as ToggleMixin };

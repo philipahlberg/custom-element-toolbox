@@ -1,6 +1,6 @@
 import { Mixin } from './mixin.js';
 
-export const PropertyChangedMixin = Mixin(SuperClass => {
+export const PropertyChanged = Mixin(SuperClass => {
   const data = new WeakMap();
   const finalized = new WeakSet();
 
@@ -87,3 +87,5 @@ export const PropertyChangedMixin = Mixin(SuperClass => {
     }
   }
 });
+
+export { PropertyChanged as PropertyChangedMixin };

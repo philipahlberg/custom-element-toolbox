@@ -1,6 +1,6 @@
 import { Mixin } from './mixin.js';
 
-export const BaseMixin = Mixin(SuperClass => {
+export const Base = Mixin(SuperClass => {
   return class BaseElement extends SuperClass {
     /**
      * Toggle a boolean attribute (removing it if it is present
@@ -34,3 +34,5 @@ export const BaseMixin = Mixin(SuperClass => {
     }
   }
 });
+
+export { Base as BaseMixin };

@@ -1,5 +1,5 @@
 import { Mixin } from './mixin.js';
-import { PropertyChangedMixin } from './property-changed-mixin.js';
+import { PropertyChanged } from './property-changed.js';
 import { toDashCase } from './shared.js';
 
 /**
@@ -7,8 +7,8 @@ import { toDashCase } from './shared.js';
  * 
  * Maps `camelCase` properties to `dash-case` attributes.
  */
-export const PropertyReflectionMixin = Mixin(SuperClass => {
-  const Base = PropertyChangedMixin(SuperClass);
+export const PropertyReflection = Mixin(SuperClass => {
+  const Base = PropertyChanged(SuperClass);
   const names = new Map();
   const finalized = new WeakSet();
 
@@ -60,3 +60,5 @@ export const PropertyReflectionMixin = Mixin(SuperClass => {
     }
   }
 });
+
+export { PropertyReflection as PropertyReflectionMixin };
