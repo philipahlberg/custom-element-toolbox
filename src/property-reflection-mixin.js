@@ -26,6 +26,9 @@ export const PropertyReflectionMixin = Mixin(SuperClass => {
       for (const key of keys) {
         const reflect = properties[key].reflectToAttribute;
         if (reflect) {
+          // Names are shared between all instances
+          // so we might have already translated this key.
+          if (names.has(key)) continue;
           const attribute = toDashCase(key);
           names.set(key, attribute);
         }
@@ -36,9 +39,7 @@ export const PropertyReflectionMixin = Mixin(SuperClass => {
 
     propertyChangedCallback(property, oldValue, newValue) {
       super.propertyChangedCallback(property, oldValue, newValue);
-      if (oldValue === newValue) {
-        return;
-      }
+      if (oldValue === newValue) return;
 
       const properties = this.constructor.properties;
       const conf = properties[property];
