@@ -9,8 +9,8 @@ export const PropertyDefaultMixin = Mixin(SuperClass => {
       super.connectedCallback();
       const ctor = this.constructor;
       const properties = ctor.properties;
+      if (properties === undefined) return;
       const keys = Object.keys(properties);
-
       for (const key of keys) {
         if (this[key] != null) continue;
         const property = properties[key];
