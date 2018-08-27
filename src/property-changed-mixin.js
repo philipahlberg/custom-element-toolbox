@@ -52,15 +52,11 @@ export const PropertyChangedMixin = Mixin(SuperClass => {
       // and assigning to the property will not trigger
       // accessors.
 
-      // To remedy this, we save, delete and reapply
-      // all declared properties.
+      // To remedy this, we save and delete all properties
+      // on the instance and reapply them to the prototype.
       const properties = this.constructor.properties;
       const keys = Object.keys(properties);
       for (const key of keys) {
-        // Properties defined through `defineProperty`
-        // are on the prototype, not the instance.
-        // Thus, if the property is present on the
-        // instance, it needs to be upgraded.
         if (!this.hasOwnProperty(key)) continue;
         const value = this[key];
         delete this[key];
