@@ -21,6 +21,7 @@ export const PropertyReflectionMixin = Mixin(SuperClass => {
       }
 
       const properties = this.properties;
+      if (properties === undefined) return;
       const keys = Object.keys(properties);
       for (const key of keys) {
         const reflect = properties[key].reflectToAttribute;
