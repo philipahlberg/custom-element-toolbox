@@ -3,10 +3,10 @@ import { Base } from './base.js';
 import { Properties } from './properties.js';
 
 export const Focus = Mixin(SuperClass => {
-  const Base = Properties(Base(SuperClass));
+  const Super = Properties(Base(SuperClass));
   const disabledChanged = Symbol();
 
-  return class FocusElement extends Base {
+  return class FocusElement extends Super {
     static get properties() {
       return Object.assign({}, super.properties, {
         /**

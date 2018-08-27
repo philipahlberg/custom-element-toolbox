@@ -2,7 +2,7 @@ import { Mixin } from './mixin.js';
 import { StaticTemplate } from './static-template.js';
 
 export const ShadyTemplate = Mixin(SuperClass => {
-  const Base = StaticTemplate(SuperClass);
+  const Super = StaticTemplate(SuperClass);
   const finalized = new WeakSet();
   const ShadyCSS = window.ShadyCSS;
   const emulated = ShadyCSS && (
@@ -10,7 +10,7 @@ export const ShadyTemplate = Mixin(SuperClass => {
     !ShadyCSS.nativeCss
   );
 
-  return class ShadyTemplateElement extends Base {
+  return class ShadyTemplateElement extends Super {
     static prepareTemplate(name) {
       if (!emulated) return;
       if (finalized.has(this)) return;

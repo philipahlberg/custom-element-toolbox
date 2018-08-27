@@ -2,9 +2,9 @@ import { Mixin } from './mixin.js';
 import { PropertyChanged } from './property-changed.js';
 
 export const PropertyDefault = Mixin(SuperClass => {
-  const Base = PropertyChanged(SuperClass);
+  const Super = PropertyChanged(SuperClass);
 
-  return class extends Base {
+  return class extends Super {
     connectedCallback() {
       super.connectedCallback();
       const ctor = this.constructor;

@@ -3,11 +3,11 @@ import { Base } from './base.js';
 import { Properties } from './properties.js';
 
 export const Control = Mixin(SuperClass => {
-  const Base = Properties(Base(SuperClass));
+  const Super = Properties(Base(SuperClass));
   const valueChanged = Symbol();
   const requiredChanged = Symbol();
 
-  return class ControlElement extends Base {
+  return class ControlElement extends Super {
     static get properties() {
       return Object.assign({}, super.properties, {
         /**

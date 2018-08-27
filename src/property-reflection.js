@@ -8,11 +8,11 @@ import { toDashCase } from './shared.js';
  * Maps `camelCase` properties to `dash-case` attributes.
  */
 export const PropertyReflection = Mixin(SuperClass => {
-  const Base = PropertyChanged(SuperClass);
+  const Super = PropertyChanged(SuperClass);
   const names = new Map();
   const finalized = new WeakSet();
 
-  return class extends Base {
+  return class extends Super {
     static setup() {
       super.setup();
 

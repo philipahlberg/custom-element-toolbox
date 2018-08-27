@@ -3,13 +3,13 @@ import { Base } from './base.js';
 import { Properties } from './properties.js';
 
 export const Toggle = Mixin(SuperClass => {
-  const Base = Properties(Base(SuperClass));
+  const Super = Properties(Base(SuperClass));
 
   const onClick = Symbol();
   const onKeydown = Symbol();
   const checkedChanged = Symbol();
 
-  return class ToggleElement extends Base {
+  return class ToggleElement extends Super {
     static get properties() {
       return Object.assign({}, super.properties, {
         checked: {
