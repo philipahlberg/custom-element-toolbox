@@ -20,7 +20,8 @@ export const ShadyTemplateMixin = Mixin(SuperClass => {
 
     constructor() {
       super();
-      this.constructor.prepareTemplate(this.localName.toLowerCase());
+      const tagName = this.localName.toLowerCase();
+      this.constructor.prepareTemplate(tagName);
     }
 
     connectedCallback() {
