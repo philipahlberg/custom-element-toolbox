@@ -11,12 +11,14 @@ export const PropertyDefault = Mixin(SuperClass => {
       const properties = ctor.properties;
       if (properties === undefined) return;
       const keys = Object.keys(properties);
+      const defaults = {};
       for (const key of keys) {
         if (this[key] != null) continue;
         const property = properties[key];
         if (property.default == null) continue;
-        this[key] = property.default();
+        defaults[key] = property.default();
       }
+      this.set(defaults);
     }
   }
 });
