@@ -1,7 +1,6 @@
 import { Mixin } from './mixin.js';
 
 export const PropertyChangedMixin = Mixin(SuperClass => {
-
   const data = new WeakMap();
   const finalized = new WeakSet();
 
@@ -13,6 +12,7 @@ export const PropertyChangedMixin = Mixin(SuperClass => {
 
       const prototype = this.prototype;
       const properties = this.properties;
+      if (properties === undefined) return;
       const keys = Object.keys(properties);
       for (const key of keys) {
         // Do not delete present accessors.
