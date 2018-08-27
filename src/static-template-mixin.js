@@ -1,19 +1,21 @@
 import { Mixin } from './mixin.js';
 
 export const StaticTemplateMixin = Mixin(SuperClass => {
-  return class StaticTemplateElement extends SuperClass {
-    constructor() {
-      super();
-      if (this.constructor.hasOwnProperty('template')) {
-        this.attachShadow({ mode: 'open' });
-      }
-    }
+  const mounted = new WeakSet();
 
+  return class StaticTemplateElement extends SuperClass {
     connectedCallback() {
-      const ctor = this.constructor;
-      if (ctor.hasOwnProperty('template')) {
-        const template = ctor.template.content;
-        this.shadowRoot.appendChild(template.cloneNode(true));
+      const constructor = this.constructor;
+      const template = constructor.template;
+      if (template != null && !mounted.has(this)) {
+        if (this.shadowRoot == null) {
+          this.attachShadow({ mode: 'open' });
+        }
+        const template = template;
+        const content = template.content;
+        const clone = content.cloneNode(true);
+        this.shadowRoot.appendChild(clone);
+        mounted.add(this);
       }
 
       if (super.connectedCallback) {
