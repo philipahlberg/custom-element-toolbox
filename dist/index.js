@@ -97,7 +97,6 @@ const connector = (store) => {
 };
 
 const PropertyChangedMixin = Mixin(SuperClass => {
-
   const data = new WeakMap();
   const finalized = new WeakSet();
 
@@ -109,6 +108,7 @@ const PropertyChangedMixin = Mixin(SuperClass => {
 
       const prototype = this.prototype;
       const properties = this.properties;
+      if (properties === undefined) return;
       const keys = Object.keys(properties);
       for (const key of keys) {
         // Do not delete present accessors.
@@ -460,19 +460,20 @@ const FocusMixin = Mixin(SuperClass => {
 });
 
 const StaticTemplateMixin = Mixin(SuperClass => {
-  return class StaticTemplateElement extends SuperClass {
-    constructor() {
-      super();
-      if (this.constructor.hasOwnProperty('template')) {
-        this.attachShadow({ mode: 'open' });
-      }
-    }
+  const mounted = new WeakSet();
 
+  return class StaticTemplateElement extends SuperClass {
     connectedCallback() {
-      const ctor = this.constructor;
-      if (ctor.hasOwnProperty('template')) {
-        const template = ctor.template.content;
-        this.shadowRoot.appendChild(template.cloneNode(true));
+      const constructor = this.constructor;
+      const template = constructor.template;
+      if (template != null && !mounted.has(this)) {
+        if (this.shadowRoot == null) {
+          this.attachShadow({ mode: 'open' });
+        }
+        const content = template.content;
+        const clone = content.cloneNode(true);
+        this.shadowRoot.appendChild(clone);
+        mounted.add(this);
       }
 
       if (super.connectedCallback) {
@@ -529,7 +530,8 @@ const ShadyTemplateMixin = Mixin(SuperClass => {
 
     constructor() {
       super();
-      this.constructor.prepareTemplate(this.localName.toLowerCase());
+      const tagName = this.localName.toLowerCase();
+      this.constructor.prepareTemplate(tagName);
     }
 
     connectedCallback() {
