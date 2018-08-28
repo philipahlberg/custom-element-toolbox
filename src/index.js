@@ -1,3 +1,4 @@
+export * from './attribute-deserialization.js';
 export * from './base.js';
 export * from './connector.js';
 export * from './control.js';
