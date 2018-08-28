@@ -12,9 +12,19 @@ export const AttributeDeserialization = Mixin(SuperClass => {
   const isSerializing = new Set();
 
   return class extends SuperClass {
+    static get observedAttributes() {
+      const observedAttributes = super.observedAttributes;
+      const properties = this.properties || {};
+      return Object.keys(properties)
+        .map(key => toDashCase(key))
+        .concat(observedAttributes);
+    }
+
     static setup() {
-      super.setup();
       if (finalized.has(this)) return;
+      if (super.setup != null) {
+        super.setup();
+      }
       const properties = this.properties;
       if (properties === undefined) return;
       const keys = Object.keys(properties);
@@ -23,10 +33,15 @@ export const AttributeDeserialization = Mixin(SuperClass => {
         // so we might have already translated this key.
         if (names.has(key)) continue;
         const attribute = toDashCase(key);
-        names.set(key, attribute);
+        names.set(attribute, key);
       }
 
       finalized.add(this);
+    }
+
+    constructor() {
+      super();
+      this.constructor.setup();
     }
 
     attributeChangedCallback(attribute, oldValue, newValue) {
@@ -50,6 +65,10 @@ export const AttributeDeserialization = Mixin(SuperClass => {
         case String:
           this[key] = newValue;
           break;
+        case Boolean:
+          this[key] = newValue != null;
+          break;
+        // Number, Object, Array
         default:
           this[key] = JSON.parse(newValue);
       }
