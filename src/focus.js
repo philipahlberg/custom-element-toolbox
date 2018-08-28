@@ -37,7 +37,6 @@ export const Focus = Mixin(SuperClass => {
 
     [disabledChanged](newValue, oldValue) {
       if (newValue === oldValue) return;
-
       this.setAttribute('aria-disabled', String(newValue));
       if (newValue) {
         // Remove attribute entirely to ensure that the
@@ -57,10 +56,7 @@ export const Focus = Mixin(SuperClass => {
      * @event focus
      */
     focus() {
-      if (this.disabled) {
-        return;
-      }
-
+      if (this.disabled) return;
       super.focus();
       this.focused = true;
       this.dispatchEvent(new FocusEvent('focus'));
@@ -77,10 +73,7 @@ export const Focus = Mixin(SuperClass => {
      * @event blur
      */
     blur() {
-      if (this.disabled) {
-        return;
-      }
-
+      if (this.disabled) return;
       super.blur();
       this.focused = false;
       this.dispatchEvent(new FocusEvent('blur'));
