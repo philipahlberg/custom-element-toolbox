@@ -17,6 +17,100 @@ const Mixin = Mix => {
   }
 };
 
+/**
+ * Convert 'PascalCase' or 'camelCase' to 'dash-case'.
+ * @param str A PascalCase og camelCase string
+ */
+function toDashCase(str) {
+  return str.replace(/([a-zA-Z])(?=[A-Z])/g, '$1-').toLowerCase();
+}
+
+/**
+ * Set properties in reaction to attributes changing.
+ * 
+ * Maps `dash-case` attributes to `camelCase` properties.
+ */
+const AttributeDeserialization = Mixin(SuperClass => {
+  const names = new Map();
+  const finalized = new WeakSet();
+  const isSerializing = new Set();
+
+  return class extends SuperClass {
+    static get observedAttributes() {
+      const observedAttributes = super.observedAttributes;
+      const properties = this.properties || {};
+      return Object.keys(properties)
+        .map(key => toDashCase(key))
+        .concat(observedAttributes);
+    }
+
+    static setup() {
+      if (finalized.has(this)) return;
+      if (super.setup != null) {
+        super.setup();
+      }
+      const properties = this.properties;
+      if (properties === undefined) return;
+      const keys = Object.keys(properties);
+      for (const key of keys) {
+        // Names are shared between all instances
+        // so we might have already translated this key.
+        if (names.has(key)) continue;
+        const attribute = toDashCase(key);
+        names.set(attribute, key);
+      }
+
+      finalized.add(this);
+    }
+
+    constructor() {
+      super();
+      this.constructor.setup();
+    }
+
+    attributeChangedCallback(attribute, oldValue, newValue) {
+      if (super.attributeChangedCallback != null) {
+        super.attributeChangedCallback(attribute, oldValue, newValue);
+      }
+
+      // Ignore unchanged values.
+      if (oldValue === newValue) return;
+      // Ignore changes from property reflection.
+      if (isSerializing.has(this)) return;
+      // Ignore changes to attributes that
+      // do not correspond to a declared property.
+      if (!names.has(attribute)) return;
+
+      const properties = this.constructor.properties;
+      const key = names.get(attribute);
+      const type = properties[key].type;
+
+      switch (type) {
+        case String:
+          this[key] = newValue;
+          break;
+        case Boolean:
+          this[key] = newValue != null;
+          break;
+        // Number, Object, Array
+        default:
+          this[key] = JSON.parse(newValue);
+      }
+    }
+
+    // Although this mixin does not specifically require
+    // PropertyChangedMixin, it has to be useable with
+    // PropertyReflectionMixin.
+    // Thus, we need to be aware when an attribute is being set
+    // as a reaction to a property change.
+    propertyChangedCallback(property, oldValue, newValue) {
+      isSerializing.add(this);
+      super.propertyChangedCallback(property, oldValue, newValue);
+      isSerializing.remove(this);
+    }
+  }
+});
+
 const Base = Mixin(SuperClass => {
   return class BaseElement extends SuperClass {
     /**
@@ -185,9 +279,9 @@ const PropertyChanged = Mixin(SuperClass => {
 });
 
 const PropertyObserver = Mixin(SuperClass => {
-  const Base = PropertyChanged(SuperClass);
+  const Super = PropertyChanged(SuperClass);
 
-  return class extends Base {
+  return class extends Super {
     propertyChangedCallback(key, oldValue, newValue) {
       super.propertyChangedCallback(key, oldValue, newValue);
       const properties = this.constructor.properties;
@@ -200,24 +294,16 @@ const PropertyObserver = Mixin(SuperClass => {
 });
 
 /**
- * Convert 'PascalCase' or 'camelCase' to 'dash-case'.
- * @param str A PascalCase og camelCase string
- */
-function toDashCase(str) {
-  return str.replace(/([a-zA-Z])(?=[A-Z])/g, '$1-').toLowerCase();
-}
-
-/**
  * Declaratively reflect properties to attributes.
  * 
  * Maps `camelCase` properties to `dash-case` attributes.
  */
 const PropertyReflection = Mixin(SuperClass => {
-  const Base = PropertyChanged(SuperClass);
+  const Super = PropertyChanged(SuperClass);
   const names = new Map();
   const finalized = new WeakSet();
 
-  return class extends Base {
+  return class extends Super {
     static setup() {
       super.setup();
 
@@ -267,21 +353,23 @@ const PropertyReflection = Mixin(SuperClass => {
 });
 
 const PropertyDefault = Mixin(SuperClass => {
-  const Base = PropertyChanged(SuperClass);
+  const Super = PropertyChanged(SuperClass);
 
-  return class extends Base {
+  return class extends Super {
     connectedCallback() {
       super.connectedCallback();
       const ctor = this.constructor;
       const properties = ctor.properties;
       if (properties === undefined) return;
       const keys = Object.keys(properties);
+      const defaults = {};
       for (const key of keys) {
         if (this[key] != null) continue;
         const property = properties[key];
         if (property.default == null) continue;
-        this[key] = property.default();
+        defaults[key] = property.default();
       }
+      this.set(defaults);
     }
   }
 });
@@ -301,11 +389,11 @@ const Properties = Mixin(SuperClass => {
 });
 
 const Control = Mixin(SuperClass => {
-  const Base$$1 = Properties(Base$$1(SuperClass));
+  const Super = Properties(Base(SuperClass));
   const valueChanged = Symbol();
   const requiredChanged = Symbol();
 
-  return class ControlElement extends Base$$1 {
+  return class ControlElement extends Super {
     static get properties() {
       return Object.assign({}, super.properties, {
         /**
@@ -369,10 +457,10 @@ const Control = Mixin(SuperClass => {
 });
 
 const Focus = Mixin(SuperClass => {
-  const Base$$1 = Properties(Base$$1(SuperClass));
+  const Super = Properties(Base(SuperClass));
   const disabledChanged = Symbol();
 
-  return class FocusElement extends Base$$1 {
+  return class FocusElement extends Super {
     static get properties() {
       return Object.assign({}, super.properties, {
         /**
@@ -403,7 +491,6 @@ const Focus = Mixin(SuperClass => {
 
     [disabledChanged](newValue, oldValue) {
       if (newValue === oldValue) return;
-
       this.setAttribute('aria-disabled', String(newValue));
       if (newValue) {
         // Remove attribute entirely to ensure that the
@@ -423,10 +510,7 @@ const Focus = Mixin(SuperClass => {
      * @event focus
      */
     focus() {
-      if (this.disabled) {
-        return;
-      }
-
+      if (this.disabled) return;
       super.focus();
       this.focused = true;
       this.dispatchEvent(new FocusEvent('focus'));
@@ -443,10 +527,7 @@ const Focus = Mixin(SuperClass => {
      * @event blur
      */
     blur() {
-      if (this.disabled) {
-        return;
-      }
-
+      if (this.disabled) return;
       super.blur();
       this.focused = false;
       this.dispatchEvent(new FocusEvent('blur'));
@@ -510,7 +591,7 @@ function html(strings, ...values) {
 }
 
 const ShadyTemplate = Mixin(SuperClass => {
-  const Base = StaticTemplate(SuperClass);
+  const Super = StaticTemplate(SuperClass);
   const finalized = new WeakSet();
   const ShadyCSS = window.ShadyCSS;
   const emulated = ShadyCSS && (
@@ -518,7 +599,7 @@ const ShadyTemplate = Mixin(SuperClass => {
     !ShadyCSS.nativeCss
   );
 
-  return class ShadyTemplateElement extends Base {
+  return class ShadyTemplateElement extends Super {
     static prepareTemplate(name) {
       if (!emulated) return;
       if (finalized.has(this)) return;
@@ -542,13 +623,13 @@ const ShadyTemplate = Mixin(SuperClass => {
 });
 
 const Toggle = Mixin(SuperClass => {
-  const Base$$1 = Properties(Base$$1(SuperClass));
+  const Super = Properties(Base(SuperClass));
 
   const onClick = Symbol();
   const onKeydown = Symbol();
   const checkedChanged = Symbol();
 
-  return class ToggleElement extends Base$$1 {
+  return class ToggleElement extends Super {
     static get properties() {
       return Object.assign({}, super.properties, {
         checked: {
@@ -632,4 +713,4 @@ const Toggle = Mixin(SuperClass => {
   }
 });
 
-export { Base, Base as BaseMixin, connector, Control, Control as ControlMixin, Focus, Focus as FocusMixin, Properties, Properties as PropertiesMixin, PropertyChanged, PropertyChanged as PropertyChangedMixin, PropertyDefault, PropertyDefault as PropertyDefaultMixin, PropertyObserver, PropertyObserver as PropertyObserverMixin, PropertyReflection, PropertyReflection as PropertyReflectionMixin, ShadyTemplate, ShadyTemplate as ShadyTemplateMixin, StaticTemplate, html, StaticTemplate as StaticTemplateMixin, Toggle, Toggle as ToggleMixin };
+export { AttributeDeserialization, AttributeDeserialization as AttributeDeserializationMixin, Base, Base as BaseMixin, connector, Control, Control as ControlMixin, Focus, Focus as FocusMixin, Properties, Properties as PropertiesMixin, PropertyChanged, PropertyChanged as PropertyChangedMixin, PropertyDefault, PropertyDefault as PropertyDefaultMixin, PropertyObserver, PropertyObserver as PropertyObserverMixin, PropertyReflection, PropertyReflection as PropertyReflectionMixin, ShadyTemplate, ShadyTemplate as ShadyTemplateMixin, StaticTemplate, html, StaticTemplate as StaticTemplateMixin, Toggle, Toggle as ToggleMixin };
