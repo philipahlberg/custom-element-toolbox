@@ -1,6 +1,6 @@
 {
   "name": "cedk",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "main": "dist/index.js",
   "repository": "https://github.com/philipahlberg/cedk.git",
   "author": "philipahlberg <23071488+philipahlberg@users.noreply.github.com>",
