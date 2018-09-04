@@ -6,7 +6,7 @@ import { toDashCase } from './shared.js';
  * 
  * Maps `dash-case` attributes to `camelCase` properties.
  */
-export const AttributeDeserialization = Mixin(SuperClass => {
+export const Attributes = Mixin(SuperClass => {
   const names = new Map();
   const finalized = new WeakSet();
   const isSerializing = new Set();
@@ -87,4 +87,4 @@ export const AttributeDeserialization = Mixin(SuperClass => {
   }
 });
 
-export { AttributeDeserialization as AttributeDeserializationMixin }
+export { Attributes as AttributesMixin }

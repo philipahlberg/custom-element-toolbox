@@ -1,8 +1,8 @@
-import { AttributeDeserialization } from '../dist/index.js';
+import { Attributes } from '../dist/index.js';
 
-const Base = AttributeDeserialization(HTMLElement);
+const Base = Attributes(HTMLElement);
 
-class AttributeElement extends Base {
+class AttributesElement extends Base {
   static get properties() {
     return {
       string: {
@@ -25,13 +25,13 @@ class AttributeElement extends Base {
   }
 }
 
-customElements.define('attribute-element', AttributeElement);
+customElements.define('attributes-element', AttributesElement);
 
-describe('AttributeDeserialization', () => {
+describe('Attributes', () => {
   let element;
 
   beforeEach(() => {
-    element = new AttributeElement();
+    element = new AttributesElement();
     document.body.appendChild(element);
   });
 
