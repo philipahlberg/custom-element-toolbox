@@ -16,7 +16,7 @@ export const Attributes = Mixin(SuperClass => {
       const observedAttributes = super.observedAttributes;
       const properties = this.properties || {};
       return Object.keys(properties)
-        .map(key => toDashCase(key))
+        .map(key => names.get(key) || toDashCase(key))
         .concat(observedAttributes);
     }
 
