@@ -2,6 +2,19 @@ import { Mixin } from './mixin.js';
 
 export const Base = Mixin(SuperClass => {
   return class BaseElement extends SuperClass {
+    constructor() {
+      super();
+      this.isConnecting = false;
+    }
+
+    connectedCallback() {
+      this.isConnecting = true;
+      if (super.connectedCallback !== undefined) {
+        super.connectedCallback();
+      }
+      this.isConnecting = false;
+    }
+
     /**
      * Toggle a boolean attribute (removing it if it is present
      * and adding it if it is not present) on the specified element.
