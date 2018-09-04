@@ -13,6 +13,7 @@ export const ShadyTemplate = Mixin(SuperClass => {
   return class ShadyTemplateElement extends Super {
     static prepareTemplate(name) {
       if (!emulated) return;
+      if (this.template == null) return;
       if (finalized.has(this)) return;
       ShadyCSS.prepareTemplate(this.template, name);
       finalized.add(this);
