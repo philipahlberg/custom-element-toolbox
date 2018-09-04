@@ -40,7 +40,7 @@ const Attributes = Mixin(SuperClass => {
       const observedAttributes = super.observedAttributes;
       const properties = this.properties || {};
       return Object.keys(properties)
-        .map(key => toDashCase(key))
+        .map(key => names.get(key) || toDashCase(key))
         .concat(observedAttributes);
     }
 
@@ -113,6 +113,19 @@ const Attributes = Mixin(SuperClass => {
 
 const Base = Mixin(SuperClass => {
   return class BaseElement extends SuperClass {
+    constructor() {
+      super();
+      this.isConnecting = false;
+    }
+
+    connectedCallback() {
+      this.isConnecting = true;
+      if (super.connectedCallback !== undefined) {
+        super.connectedCallback();
+      }
+      this.isConnecting = false;
+    }
+
     /**
      * Toggle a boolean attribute (removing it if it is present
      * and adding it if it is not present) on the specified element.
@@ -562,10 +575,6 @@ const StaticTemplate = Mixin(SuperClass => {
   }
 });
 
-/**
- * @param {*} value Object to stringify into HTML
- * @return {string} HTML stringified form of `value`
- */
 function sanitize(value) {
   if (value instanceof HTMLTemplateElement) {
     return value.innerHTML;
@@ -574,12 +583,6 @@ function sanitize(value) {
   }
 }
 
-/**
- * A template literal tag that creates an HTML <template> element from the contents of the string.
- * @param {Array<string>} strings Constant parts of tagged template literal
- * @param {...*} values Variable parts of tagged template literal
- * @return {!HTMLTemplateElement} Constructed HTMLTemplateElement
- */
 function html(strings, ...values) {
   const rawStrings = strings.raw;
   const template = document.createElement('template');
