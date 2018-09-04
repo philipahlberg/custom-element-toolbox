@@ -106,7 +106,7 @@ const Attributes = Mixin(SuperClass => {
     propertyChangedCallback(property, oldValue, newValue) {
       isSerializing.add(this);
       super.propertyChangedCallback(property, oldValue, newValue);
-      isSerializing.remove(this);
+      isSerializing.delete(this);
     }
   }
 });
