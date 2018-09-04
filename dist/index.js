@@ -30,7 +30,7 @@ function toDashCase(str) {
  * 
  * Maps `dash-case` attributes to `camelCase` properties.
  */
-const AttributeDeserialization = Mixin(SuperClass => {
+const Attributes = Mixin(SuperClass => {
   const names = new Map();
   const finalized = new WeakSet();
   const isSerializing = new Set();
@@ -602,6 +602,7 @@ const ShadyTemplate = Mixin(SuperClass => {
   return class ShadyTemplateElement extends Super {
     static prepareTemplate(name) {
       if (!emulated) return;
+      if (this.template == null) return;
       if (finalized.has(this)) return;
       ShadyCSS.prepareTemplate(this.template, name);
       finalized.add(this);
@@ -713,4 +714,4 @@ const Toggle = Mixin(SuperClass => {
   }
 });
 
-export { AttributeDeserialization, AttributeDeserialization as AttributeDeserializationMixin, Base, Base as BaseMixin, connector, Control, Control as ControlMixin, Focus, Focus as FocusMixin, Properties, Properties as PropertiesMixin, PropertyChanged, PropertyChanged as PropertyChangedMixin, PropertyDefault, PropertyDefault as PropertyDefaultMixin, PropertyObserver, PropertyObserver as PropertyObserverMixin, PropertyReflection, PropertyReflection as PropertyReflectionMixin, ShadyTemplate, ShadyTemplate as ShadyTemplateMixin, StaticTemplate, html, StaticTemplate as StaticTemplateMixin, Toggle, Toggle as ToggleMixin };
+export { Attributes, Attributes as AttributesMixin, Base, Base as BaseMixin, connector, Control, Control as ControlMixin, Focus, Focus as FocusMixin, Properties, Properties as PropertiesMixin, PropertyChanged, PropertyChanged as PropertyChangedMixin, PropertyDefault, PropertyDefault as PropertyDefaultMixin, PropertyObserver, PropertyObserver as PropertyObserverMixin, PropertyReflection, PropertyReflection as PropertyReflectionMixin, ShadyTemplate, ShadyTemplate as ShadyTemplateMixin, StaticTemplate, html, StaticTemplate as StaticTemplateMixin, Toggle, Toggle as ToggleMixin };
