@@ -2,7 +2,7 @@ language: node_js
 node_js:
   - "node"
 addons:
-  chrome: latest
+  chrome: stable
   firefox: latest
 cache: yarn
 before_script:
