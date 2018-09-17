@@ -16,11 +16,7 @@ module.exports = (config) => {
     browsers: ['ChromeCI', 'FirefoxCI'],
     customLaunchers: {
       ChromeCI: {
-        base: 'Chrome',
-        flags: [
-          '--headless',
-          '--no-sandbox'
-        ]
+        base: 'ChromeHeadless'
       },
       FirefoxCI: {
         base: 'Firefox',
