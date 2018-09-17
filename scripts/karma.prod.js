@@ -13,7 +13,7 @@ module.exports = (config) => {
       { pattern: 'dist/index.js', type: 'module' },
       { pattern: 'test/*.js', type: 'module' }
     ],
-    browsers: ['ChromeHeadless', 'FirefoxHeadless', 'Edge'],
+    browsers: ['ChromeHeadless', 'FirefoxHeadless'],
     customLaunchers: {
       FirefoxHeadless: {
         base: 'Firefox',

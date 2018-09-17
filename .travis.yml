@@ -1,6 +1,9 @@
 language: node_js
 node_js:
   - "node"
+addons:
+  chrome: latest
+  firefox: latest
 cache: yarn
 before_script:
   - export DISPLAY=:99.0
