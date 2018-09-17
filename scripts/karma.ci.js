@@ -25,7 +25,7 @@ module.exports = (config) => {
         ],
       },
     },
-    reporters: ['progress'],
+    reporters: ['dots'],
     port: 1234,
     colors: true,
     logLevel: config.LOG_WARN,
