@@ -4,6 +4,7 @@ node_js:
 addons:
   chrome: stable
   firefox: latest
+sudo: required
 cache: yarn
 before_script:
   - export DISPLAY=:99.0
