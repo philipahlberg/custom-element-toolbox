@@ -12,5 +12,3 @@ parserOptions:
   ecmaVersion: 2017
 settings:
   import/resolver: node
-rules:
-  import/no-named-as-default: 0
