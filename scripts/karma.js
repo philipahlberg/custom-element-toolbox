@@ -11,16 +11,22 @@ module.exports = (config) => {
     files: [
       ...polyfills,
       { pattern: 'dist/index.js', type: 'module' },
-      { pattern: 'test/*.js', type: 'module' }
+      { pattern: 'test/index.js', type: 'module' },
+      { pattern: 'test/*.js', type: 'module', included: false }
     ],
-    browsers: ['ChromeHeadless', 'FirefoxHeadless'],
     customLaunchers: {
       FirefoxHeadless: {
         base: 'Firefox',
         flags: ['-headless'],
       },
     },
-    reporters: ['progress'],
+    browsers: [
+      'ChromeHeadless',
+      'FirefoxHeadless'
+    ],
+    reporters: [
+      'dots'
+    ],
     port: 1234,
     colors: true,
     logLevel: config.LOG_WARN,

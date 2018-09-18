@@ -1,12 +1,13 @@
 import resolve from 'rollup-plugin-node-resolve';
-import minify from 'rollup-plugin-uglify';
+import { terser } from 'rollup-plugin-terser';
 
 export default [
   {
     input: './src/index.js',
     output: {
       file: './dist/index.js',
-      format: 'es'
+      format: 'es',
+      sourcemap: true
     },
     plugins: [
       resolve()
@@ -16,11 +17,12 @@ export default [
     input: './src/index.js',
     output: {
       file: './dist/index.min.js',
-      format: 'es'
+      format: 'es',
+      sourcemap: true
     },
     plugins: [
       resolve(),
-      minify()
+      terser()
     ]
   }
 ]

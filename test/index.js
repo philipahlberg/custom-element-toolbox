@@ -1,0 +1,11 @@
+import './attributes.spec.js';
+import './base.spec.js';
+import './control.spec.js';
+import './focus.spec.js';
+import './properties.spec.js';
+import './property-changed.spec.js';
+import './property-default.spec.js';
+import './property-observer.spec.js';
+import './property-reflection.spec.js';
+import './shady-template.spec.js';
+import './toggle.spec.js';
