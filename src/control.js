@@ -2,6 +2,24 @@ import { Mixin } from './mixin.js';
 import { Base } from './base.js';
 import { Properties } from './properties.js';
 
+/**
+ * A generic mixin for mimicking
+ * the behavior of a form control.
+ * 
+ * Attributes:
+ * - role
+ * - name
+ * - value
+ * - required
+ * 
+ * Properties:
+ * - role
+ * - name
+ * - value
+ * - required
+ * - valid
+ * 
+ */
 export const Control = Mixin(SuperClass => {
   const Super = Properties(Base(SuperClass));
   const valueChanged = Symbol();

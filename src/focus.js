@@ -2,10 +2,36 @@ import { Mixin } from './mixin.js';
 import { Base } from './base.js';
 import { Properties } from './properties.js';
 
+/**
+ * A mixin that enables an element to mimick
+ * the native behavior of focusable elements.
+ * 
+ * Attributes:
+ * - disabled
+ * - focused
+ * 
+ * Properties:
+ * - disabled
+ * - focused
+ * 
+ * Events:
+ * - focus
+ * - focusin
+ * - blur
+ * - focusout
+ * 
+ * Methods:
+ * - focus
+ * - blur
+ * 
+ */
 export const Focus = Mixin(SuperClass => {
   const Super = Properties(Base(SuperClass));
   const disabledChanged = Symbol();
 
+  /**
+   * A focusable element.
+   */
   return class FocusElement extends Super {
     static get properties() {
       return Object.assign({}, super.properties, {

@@ -2,6 +2,24 @@ import { Mixin } from './mixin.js';
 import { Base } from './base.js';
 import { Properties } from './properties.js';
 
+/**
+ * A generic mixin for elements that represent
+ * an on/off control.
+ * 
+ * Attributes:
+ * - checked
+ * 
+ * Properties:
+ * - checked
+ * 
+ * Events:
+ * - input
+ * - change
+ * 
+ * Methods:
+ * - toggle
+ * 
+ */
 export const Toggle = Mixin(SuperClass => {
   const Super = Properties(Base(SuperClass));
 
