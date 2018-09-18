@@ -20,7 +20,7 @@ export const PropertyDefault = Mixin(SuperClass => {
       }
       this.set(defaults);
     }
-  }
+  };
 });
 
 export { PropertyDefault as PropertyDefaultMixin };

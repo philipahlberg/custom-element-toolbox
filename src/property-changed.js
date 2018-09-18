@@ -25,7 +25,7 @@ export const PropertyChanged = Mixin(SuperClass => {
         function set(newValue) {
           const oldValue = data.get(this)[key];
           data.get(this)[key] = newValue;
-          this.propertyChangedCallback(key, oldValue, newValue);          
+          this.propertyChangedCallback(key, oldValue, newValue);
         }
 
         Object.defineProperty(prototype, key, {
@@ -85,7 +85,7 @@ export const PropertyChanged = Mixin(SuperClass => {
         this.propertyChangedCallback(key, oldValue, newValue);
       }
     }
-  }
+  };
 });
 
 export { PropertyChanged as PropertyChangedMixin };

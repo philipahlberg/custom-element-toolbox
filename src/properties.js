@@ -6,16 +6,10 @@ import { PropertyDefault } from './property-default.js';
 
 export const Properties = Mixin(SuperClass => {
   const Base = PropertyDefault(
-    PropertyReflection(
-      PropertyObserver(
-        PropertyChanged(
-          SuperClass
-        )
-      )
-    )
+    PropertyReflection(PropertyObserver(PropertyChanged(SuperClass)))
   );
 
-  return class PropertiesElement extends Base {}
+  return class PropertiesElement extends Base {};
 });
 
 export { Properties as PropertiesMixin };

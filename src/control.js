@@ -5,20 +5,20 @@ import { Properties } from './properties.js';
 /**
  * A generic mixin for mimicking
  * the behavior of a form control.
- * 
+ *
  * Attributes:
  * - role
  * - name
  * - value
  * - required
- * 
+ *
  * Properties:
  * - role
  * - name
  * - value
  * - required
  * - valid
- * 
+ *
  */
 export const Control = Mixin(SuperClass => {
   const Super = Properties(Base(SuperClass));
@@ -66,7 +66,7 @@ export const Control = Mixin(SuperClass => {
       super();
       this.required = false;
     }
- 
+
     get valid() {
       return this.value != null || !this.required;
     }
@@ -85,7 +85,7 @@ export const Control = Mixin(SuperClass => {
       this.setAttribute('aria-invalid', !this.valid);
       this.toggleAttribute('valid', this.valid);
     }
-  }
+  };
 });
 
 export { Control as ControlMixin };

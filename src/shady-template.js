@@ -5,10 +5,7 @@ export const ShadyTemplate = Mixin(SuperClass => {
   const Super = StaticTemplate(SuperClass);
   const finalized = new WeakSet();
   const ShadyCSS = window.ShadyCSS;
-  const emulated = ShadyCSS && (
-    !ShadyCSS.nativeShadow ||
-    !ShadyCSS.nativeCss
-  );
+  const emulated = ShadyCSS && (!ShadyCSS.nativeShadow || !ShadyCSS.nativeCss);
 
   return class ShadyTemplateElement extends Super {
     static prepareTemplate(name) {
@@ -31,7 +28,7 @@ export const ShadyTemplate = Mixin(SuperClass => {
         ShadyCSS.styleElement(this);
       }
     }
-  }
+  };
 });
 
 export { ShadyTemplate as ShadyTemplateMixin };

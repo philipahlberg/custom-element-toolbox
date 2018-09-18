@@ -3,7 +3,7 @@ import { toDashCase } from './shared.js';
 
 /**
  * Set properties in reaction to attributes changing.
- * 
+ *
  * Maps `dash-case` attributes to `camelCase` properties.
  */
 export const Attributes = Mixin(SuperClass => {
@@ -84,7 +84,7 @@ export const Attributes = Mixin(SuperClass => {
       super.propertyChangedCallback(property, oldValue, newValue);
       isSerializing.delete(this);
     }
-  }
+  };
 });
 
-export { Attributes as AttributesMixin }
+export { Attributes as AttributesMixin };

@@ -5,25 +5,25 @@ import { Properties } from './properties.js';
 /**
  * A mixin that enables an element to mimick
  * the native behavior of focusable elements.
- * 
+ *
  * Attributes:
  * - disabled
  * - focused
- * 
+ *
  * Properties:
  * - disabled
  * - focused
- * 
+ *
  * Events:
  * - focus
  * - focusin
  * - blur
  * - focusout
- * 
+ *
  * Methods:
  * - focus
  * - blur
- * 
+ *
  */
 export const Focus = Mixin(SuperClass => {
   const Super = Properties(Base(SuperClass));
@@ -45,7 +45,7 @@ export const Focus = Mixin(SuperClass => {
         },
         /**
          * Specifies if the element is focused.
-         * 
+         *
          * Note: use `.focus()` to focus the element.
          */
         focused: {
@@ -76,9 +76,9 @@ export const Focus = Mixin(SuperClass => {
 
     /**
      * Focus the element, unless it is disabled.
-     * 
+     *
      * Fires a `focus` event.
-     * 
+     *
      * @event focus
      */
     focus() {
@@ -86,16 +86,18 @@ export const Focus = Mixin(SuperClass => {
       super.focus();
       this.focused = true;
       this.dispatchEvent(new FocusEvent('focus'));
-      this.dispatchEvent(new FocusEvent('focusin', {
-        bubbles: true
-      }));
+      this.dispatchEvent(
+        new FocusEvent('focusin', {
+          bubbles: true
+        })
+      );
     }
 
     /**
      * Blur the element.
-     * 
+     *
      * Fires a `blur` event.
-     * 
+     *
      * @event blur
      */
     blur() {
@@ -103,11 +105,13 @@ export const Focus = Mixin(SuperClass => {
       super.blur();
       this.focused = false;
       this.dispatchEvent(new FocusEvent('blur'));
-      this.dispatchEvent(new FocusEvent('focusout', {
-        bubbles: true
-      }));
+      this.dispatchEvent(
+        new FocusEvent('focusout', {
+          bubbles: true
+        })
+      );
     }
-  }
+  };
 });
 
 export { Focus as FocusMixin };

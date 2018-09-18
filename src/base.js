@@ -18,14 +18,14 @@ export const Base = Mixin(SuperClass => {
     /**
      * Toggle a boolean attribute (removing it if it is present
      * and adding it if it is not present) on the specified element.
-     * 
+     *
      * @param {String} name A string specifying the name of the attribute
      * to be toggled.
      * @param {Boolean} force A boolean value to determine whether the
      * attribute should be added or removed, no matter whether the
      * attribute is present or not at the moment.
-     * 
-     * @returns {Boolean} true if attribute name is eventually present, 
+     *
+     * @returns {Boolean} true if attribute name is eventually present,
      * and false otherwise.
      */
     toggleAttribute(name, force) {
@@ -45,7 +45,7 @@ export const Base = Mixin(SuperClass => {
 
       return force || this.hasAttribute(name);
     }
-  }
+  };
 });
 
 export { Base as BaseMixin };

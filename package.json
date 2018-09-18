@@ -15,7 +15,7 @@
     "docs:build": "documentation build src/index.js -f html -o docs/",
     "docs:serve": "documentation serve src/index.js",
     "lint": "eslint src",
-    "format": "prettier \"src/*.js\"",
+    "format": "prettier \"src/*.js\" --write",
     "release": "bash scripts/release.sh"
   },
   "devDependencies": {

@@ -14,5 +14,5 @@ export const Mixin = Mix => {
     const application = Mix(SuperClass);
     mixes.add(application);
     return application;
-  }
+  };
 };

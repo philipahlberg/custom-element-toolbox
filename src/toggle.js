@@ -5,20 +5,20 @@ import { Properties } from './properties.js';
 /**
  * A generic mixin for elements that represent
  * an on/off control.
- * 
+ *
  * Attributes:
  * - checked
- * 
+ *
  * Properties:
  * - checked
- * 
+ *
  * Events:
  * - input
  * - change
- * 
+ *
  * Methods:
  * - toggle
- * 
+ *
  */
 export const Toggle = Mixin(SuperClass => {
   const Super = Properties(Base(SuperClass));
@@ -49,9 +49,11 @@ export const Toggle = Mixin(SuperClass => {
       if (newValue === oldValue) return;
 
       this.setAttribute('aria-checked', String(newValue));
-      this.dispatchEvent(new Event('input', {
-        bubbles: true
-      }));
+      this.dispatchEvent(
+        new Event('input', {
+          bubbles: true
+        })
+      );
     }
 
     connectedCallback() {
@@ -66,7 +68,7 @@ export const Toggle = Mixin(SuperClass => {
     /**
      * Toggle the checked state of the element,
      * unless the element is disabled.
-     * 
+     *
      * @event input
      */
     toggle() {
@@ -84,11 +86,13 @@ export const Toggle = Mixin(SuperClass => {
         return;
       }
       this.toggle();
-      this.dispatchEvent(new Event('change', {
-        bubbles: true
-      }));
+      this.dispatchEvent(
+        new Event('change', {
+          bubbles: true
+        })
+      );
     }
-  
+
     /**
      * @private
      */
@@ -100,15 +104,17 @@ export const Toggle = Mixin(SuperClass => {
         case 'Enter':
         case ' ':
           this.toggle();
-          this.dispatchEvent(new Event('change', {
-            bubbles: true
-          }));
+          this.dispatchEvent(
+            new Event('change', {
+              bubbles: true
+            })
+          );
           break;
         default:
           return;
       }
     }
-  }
+  };
 });
 
 export { Toggle as ToggleMixin };

@@ -4,7 +4,7 @@ import { toDashCase } from './shared.js';
 
 /**
  * Declaratively reflect properties to attributes.
- * 
+ *
  * Maps `camelCase` properties to `dash-case` attributes.
  */
 export const PropertyReflection = Mixin(SuperClass => {
@@ -58,7 +58,7 @@ export const PropertyReflection = Mixin(SuperClass => {
         }
       }
     }
-  }
+  };
 });
 
 export { PropertyReflection as PropertyReflectionMixin };

@@ -13,7 +13,7 @@ export const PropertyObserver = Mixin(SuperClass => {
         this[observer](newValue, oldValue);
       }
     }
-  }
+  };
 });
 
 export { PropertyObserver as PropertyObserverMixin };

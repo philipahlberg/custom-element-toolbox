@@ -21,7 +21,7 @@ export const StaticTemplate = Mixin(SuperClass => {
         super.connectedCallback();
       }
     }
-  }
+  };
 });
 
 function sanitize(value) {
