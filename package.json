@@ -1,10 +1,20 @@
 {
   "name": "cedk",
   "version": "0.5.3",
+  "description": "A small, modular & powerful custom element development kit.",
   "main": "dist/index.js",
   "repository": "https://github.com/philipahlberg/cedk.git",
   "author": "philipahlberg <23071488+philipahlberg@users.noreply.github.com>",
   "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "custom",
+    "element",
+    "web",
+    "component"
+  ],
   "scripts": {
     "dev": "rollup -w -c scripts/rollup.dev.js",
     "test": "karma start scripts/karma.js",
