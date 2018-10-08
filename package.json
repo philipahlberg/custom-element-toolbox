@@ -1,6 +1,6 @@
 {
   "name": "cedk",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "description": "A small, modular & powerful custom element development kit.",
   "main": "dist/index.js",
   "repository": "https://github.com/philipahlberg/cedk.git",
