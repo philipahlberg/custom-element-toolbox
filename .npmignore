@@ -1,8 +1,0 @@
-node_modules
-scripts
-src
-test
-.eslintrc.yaml
-.prettierrc
-.gitignore
-yarn.lock
