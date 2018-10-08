@@ -17,13 +17,12 @@
   ],
   "scripts": {
     "dev": "rollup -w -c scripts/rollup.dev.js",
-    "test": "karma start scripts/karma.js",
-    "test:dev": "karma start scripts/karma.dev.js",
     "build": "rollup -c scripts/rollup.js",
     "build:dev": "rollup -w -c scripts/rollup.dev.js",
-    "docs": "npm run docs:serve",
-    "docs:build": "documentation build src/index.js -f html -o docs/",
-    "docs:serve": "documentation serve src/index.js",
+    "test": "karma start scripts/karma.js",
+    "test:dev": "karma start scripts/karma.dev.js",
+    "docs": "documentation build src/index.js -f html -o docs/",
+    "docs:dev": "documentation serve src/index.js",
     "lint": "eslint src",
     "format": "prettier \"src/*.js\" --write",
     "release": "bash scripts/release.sh"

@@ -13,10 +13,8 @@ echo "Releasing $VERSION..."
 npm run build
 # Run browser tests
 npm run test
-
 # Bump package.json
 npm version "$VERSION"
-
 # Commit the bump
 git commit -am "$VERSION"
 # Tag the version
@@ -25,5 +23,5 @@ git tag "$VERSION"
 git push
 # Push the tag
 git push origin "$VERSION"
-# Publish to npmjs.com
+# Publish to npm
 npm publish
