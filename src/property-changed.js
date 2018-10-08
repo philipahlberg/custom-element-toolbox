@@ -55,12 +55,14 @@ export const PropertyChanged = Mixin(SuperClass => {
       // To remedy this, we save and delete all properties
       // on the instance and reapply them to the prototype.
       const properties = this.constructor.properties;
-      const keys = Object.keys(properties);
-      for (const key of keys) {
-        if (!this.hasOwnProperty(key)) continue;
-        const value = this[key];
-        delete this[key];
-        this[key] = value;
+      if (properties != null) {
+        const keys = Object.keys(properties);
+        for (const key of keys) {
+          if (!this.hasOwnProperty(key)) continue;
+          const value = this[key];
+          delete this[key];
+          this[key] = value;
+        }
       }
 
       if (super.connectedCallback) {
