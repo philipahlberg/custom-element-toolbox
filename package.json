@@ -44,9 +44,9 @@
     "karma-sinon": "^1.0.5",
     "mocha": "^6.2.2",
     "prettier": "^1.19.1",
-    "rollup": "^0.66.0",
-    "rollup-plugin-node-resolve": "^3.4.0",
-    "rollup-plugin-terser": "^3.0.0",
+    "rollup": "^1.27.4",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-terser": "^5.1.2",
     "sinon": "^7.5.0"
   },
   "peerDependencies": {},
