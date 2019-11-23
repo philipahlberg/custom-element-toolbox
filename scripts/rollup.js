@@ -1,18 +1,9 @@
 import resolve from 'rollup-plugin-node-resolve';
 import { terser } from 'rollup-plugin-terser';
+import dev from './rollup.dev';
 
 export default [
-  {
-    input: './src/index.js',
-    output: {
-      file: './dist/index.js',
-      format: 'es',
-      sourcemap: true
-    },
-    plugins: [
-      resolve()
-    ]
-  },
+  dev,
   {
     input: './src/index.js',
     output: {
@@ -25,4 +16,4 @@ export default [
       terser()
     ]
   }
-]
+];

@@ -16,8 +16,8 @@ module.exports = (config) => {
     port: 1234,
     colors: true,
     logLevel: config.LOG_WARN,
-    autoWatch: true,
-    singleRun: false,
+    autoWatch: false,
+    singleRun: true,
     // https://github.com/karma-runner/karma/pull/2834#issuecomment-376854730
     customContextFile: 'test/context.html',
     customDebugFile: 'test/debug.html'
