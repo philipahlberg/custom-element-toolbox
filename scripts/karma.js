@@ -1,15 +1,8 @@
-const polyfills = [
-  '@webcomponents/custom-elements',
-  '@webcomponents/shadydom',
-  '@webcomponents/shadycss/scoping-shim.min.js'
-].map(p => ({ pattern: require.resolve(p) }));
-
 module.exports = (config) => {
   config.set({
     basePath: '../',
     frameworks: ['mocha', 'chai', 'sinon'],
     files: [
-      ...polyfills,
       { pattern: 'dist/index.js', type: 'module' },
       { pattern: 'test/index.js', type: 'module' },
       { pattern: 'test/*.js', type: 'module', included: false }
